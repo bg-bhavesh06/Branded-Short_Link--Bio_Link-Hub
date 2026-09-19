@@ -218,44 +218,20 @@ export function DashboardLayout() {
             </div>
           </div>
 
-          {/* Right: Notifications & User Menu */}
+          {/* Right: Logout Action */}
           <div className="flex items-center gap-3">
-            {/* Notification Bell */}
             <button
               type="button"
-              className="relative p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors"
-              aria-label="Notifications"
+              onClick={async () => {
+                await logout();
+                navigate("/login");
+              }}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 hover:text-rose-700 border border-rose-200/80 shadow-2xs transition-all cursor-pointer active:scale-95"
+              aria-label="Logout"
             >
-              <Bell className="size-5 text-slate-600" />
-              <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-rose-500 ring-2 ring-white" />
+              <LogOut className="size-4" />
+              <span>Logout</span>
             </button>
-
-            {/* Profile Chip */}
-            <div
-              onClick={() => navigate("/settings")}
-              className="flex items-center gap-2.5 pl-2 border-l border-slate-200 cursor-pointer select-none hover:opacity-80 transition-opacity"
-            >
-              {user?.avatar ? (
-                <img
-                  src={user.avatar}
-                  alt="Avatar"
-                  className="size-8 rounded-full object-cover border border-slate-200"
-                />
-              ) : (
-                <div className="flex size-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs border border-indigo-200">
-                  {(user?.name || "B").charAt(0).toUpperCase()}
-                </div>
-              )}
-              <div className="hidden md:flex flex-col text-left">
-                <span className="text-xs font-bold text-slate-900 leading-tight">
-                  {user?.name?.split(" ")[0] || "Bhavesh"}
-                </span>
-                <span className="text-[10px] text-slate-400 leading-tight">
-                  @{user?.username || "creator"}
-                </span>
-              </div>
-              <ChevronDown className="size-3.5 text-slate-400 hidden md:block" />
-            </div>
           </div>
         </header>
 
