@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 import { CheckCircle2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +8,7 @@ import { UrlShortenerVideoDemo } from "@/components/UrlShortenerVideoDemo";
 
 export function Hero() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   return (
     <section className="relative overflow-hidden pt-8 pb-16 md:pt-14 md:pb-24 lg:pt-18 lg:pb-28">
@@ -43,11 +45,11 @@ export function Hero() {
             {/* CTA Buttons */}
             <div className="mt-8 flex flex-wrap items-center gap-3.5 sm:gap-4 w-full sm:w-auto">
               <Button
-                onClick={() => navigate("/signup")}
+                onClick={() => navigate(isAuthenticated ? "/links" : "/signup")}
                 size="xl"
                 className="bg-slate-950 hover:bg-slate-800 text-white rounded-2xl shadow-md px-6 font-semibold text-base flex items-center gap-2 group transition-all"
               >
-                <span>Get Started Free</span>
+                <span>{isAuthenticated ? "Go to Dashboard" : "Get Started Free"}</span>
                 <ArrowRight className="size-4.5 transition-transform group-hover:translate-x-1" />
               </Button>
 

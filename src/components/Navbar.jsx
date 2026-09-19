@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 import {
   Link2,
   ChevronDown,
@@ -8,6 +9,8 @@ import {
   Sparkles,
   LayoutGrid,
   ExternalLink,
+  LayoutDashboard,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +25,7 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileProductsOpen, setMobileProductsOpen] = useState(false);
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
 
   const handleNavigation = (path) => {
     navigate(path);
@@ -111,19 +115,32 @@ export function Navbar() {
 
         {/* Desktop Right Actions */}
         <div className="hidden md:flex items-center gap-3">
-          <Link
-            to="/login"
-            className="px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-950 transition-colors"
-          >
-            Sign in
-          </Link>
-          <Button
-            onClick={() => handleNavigation("/signup")}
-            variant="default"
-            className="bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs px-4.5 font-semibold text-sm"
-          >
-            Get Started
-          </Button>
+          {isAuthenticated ? (
+            <Button
+              onClick={() => handleNavigation("/links")}
+              variant="default"
+              className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm px-4.5 font-semibold text-sm flex items-center gap-2"
+            >
+              <LayoutDashboard className="size-4" />
+              <span>Dashboard</span>
+            </Button>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-950 transition-colors"
+              >
+                Sign in
+              </Link>
+              <Button
+                onClick={() => handleNavigation("/signup")}
+                variant="default"
+                className="bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs px-4.5 font-semibold text-sm"
+              >
+                Get Started
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Mobile Hamburger Toggle Button */}
