@@ -52,38 +52,9 @@
   box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
 }
 
-/* Shimmering Animated Gradient */
-@keyframes textShimmer {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-.animate-shimmer-text {
-  background-size: 200% auto;
-  animation: textShimmer 6s ease infinite;
-}
-
-/* Floating ambient light motion */
-@keyframes floatOrb {
-  0%, 100% {
-    transform: translate(0, 0) scale(1);
-  }
-  50% {
-    transform: translate(15px, -20px) scale(1.08);
-  }
-}
-
-.animate-float-slow {
-  animation: floatOrb 10s ease-in-out infinite;
-}
-
-.animate-float-reverse {
-  animation: floatOrb 12s ease-in-out infinite reverse;
+.subtle-gradient-bg {
+  background: radial-gradient(circle at 10% 20%, rgba(238, 242, 255, 0.7) 0%, transparent 40%),
+              radial-gradient(circle at 90% 15%, rgba(243, 232, 255, 0.7) 0%, transparent 40%),
+              radial-gradient(circle at 50% 90%, rgba(239, 246, 255, 0.6) 0%, transparent 50%),
+              #ffffff;
 }

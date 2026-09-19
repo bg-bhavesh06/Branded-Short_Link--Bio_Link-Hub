@@ -10,9 +10,9 @@ export function Hero() {
 
   return (
     <section className="relative overflow-hidden pt-8 pb-16 md:pt-14 md:pb-24 lg:pt-18 lg:pb-28">
-      {/* Soft Ambient Background Glows with organic floating motion */}
-      <div className="absolute top-0 left-1/4 -z-10 size-96 rounded-full bg-purple-200/50 blur-3xl pointer-events-none animate-float-slow" />
-      <div className="absolute top-1/3 right-10 -z-10 size-96 rounded-full bg-indigo-200/40 blur-3xl pointer-events-none animate-float-reverse" />
+      {/* Soft Ambient Background Glows */}
+      <div className="absolute top-0 left-1/4 -z-10 size-96 rounded-full bg-purple-200/40 blur-3xl pointer-events-none" />
+      <div className="absolute top-1/3 right-10 -z-10 size-96 rounded-full bg-indigo-200/30 blur-3xl pointer-events-none" />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-10 items-center">
@@ -21,16 +21,16 @@ export function Hero() {
             {/* Small Badge */}
             <Badge
               variant="default"
-              className="mb-5 bg-indigo-50/90 text-indigo-700 border-indigo-200/70 px-3.5 py-1 text-xs sm:text-sm font-bold tracking-wider uppercase rounded-full shadow-xs hover:scale-105 transition-transform"
+              className="mb-5 bg-indigo-50/90 text-indigo-700 border-indigo-200/70 px-3.5 py-1 text-xs sm:text-sm font-bold tracking-wider uppercase rounded-full shadow-xs"
             >
               ALL-IN-ONE FOR CREATORS
             </Badge>
 
-            {/* Main Heading with Shimmering Gradient */}
+            {/* Main Heading */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-950 leading-[1.12]">
               Short Links. <br />
               Powerful Profiles. <br />
-              <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 bg-clip-text text-transparent animate-shimmer-text">
+              <span className="bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 bg-clip-text text-transparent">
                 All in One Place.
               </span>
             </h1>

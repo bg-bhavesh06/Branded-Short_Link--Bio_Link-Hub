@@ -9,201 +9,182 @@ import {
   Loader2,
   Video,
   Sparkles,
-  Volume2,
-  VolumeX,
 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 const FULL_URL = "https://example.com/products/summer-sale";
 const SHORT_URL = "https://linkhub.dev/r/summer";
-const TOTAL_CYCLE = 12000; // 12 seconds loop
+const TOTAL_DURATION = 11000; // 11 seconds loop
 
 export function UrlShortenerVideoDemo() {
-  const [viewMode, setViewMode] = useState("live"); // "live" or "video"
   const [isPlaying, setIsPlaying] = useState(true);
-  const [progress, setProgress] = useState(0);
+  const [progress, setProgress] = useState(0); // 0 to 100%
 
-  // Live Animation States
+  // Animation States
   const [inputValue, setInputValue] = useState("");
-  const [isInputFocused, setIsInputFocused] = useState(false);
   const [isShortening, setIsShortening] = useState(false);
   const [showShortUrl, setShowShortUrl] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [showQr, setShowQr] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
-  const [analytics, setAnalytics] = useState({ clicks: "0", week: 0, growth: 0 });
+  const [analyticsCount, setAnalyticsCount] = useState({ clicks: 0, week: 0, growth: 0 });
 
-  // Mouse Cursor Coordinates (% x, px y)
-  const [cursor, setCursor] = useState({
-    x: 82,
-    y: 320,
-    visible: true,
-    clicking: false,
-  });
-
-  // Video Mode States
-  const [isVideoMuted, setIsVideoMuted] = useState(true);
-  const [videoProgress, setVideoProgress] = useState(0);
-  const videoRef = useRef(null);
+  // Mouse Cursor State
+  const [cursorPos, setCursorPos] = useState({ x: 80, y: 310, visible: true, clicking: false });
 
   const animationTimeRef = useRef(0);
   const rafRef = useRef(null);
   const lastTimestampRef = useRef(null);
 
-  // Main Live Animation Loop
+  // Main animation clock loop
   useEffect(() => {
-    if (viewMode !== "live" || !isPlaying) {
+    if (!isPlaying) {
       lastTimestampRef.current = null;
       return;
     }
 
-    const runLoop = (timestamp) => {
+    const animate = (timestamp) => {
       if (!lastTimestampRef.current) lastTimestampRef.current = timestamp;
-      const delta = timestamp - lastTimestampRef.current;
+      const deltaTime = timestamp - lastTimestampRef.current;
       lastTimestampRef.current = timestamp;
 
-      animationTimeRef.current = (animationTimeRef.current + delta) % TOTAL_CYCLE;
+      animationTimeRef.current = (animationTimeRef.current + deltaTime) % TOTAL_DURATION;
       const t = animationTimeRef.current;
-      setProgress((t / TOTAL_CYCLE) * 100);
+      setProgress((t / TOTAL_DURATION) * 100);
 
-      // SCENE 1: Start Empty (0ms - 600ms)
-      if (t < 600) {
+      // SCENE 1: Start / Reset (0ms - 800ms)
+      if (t < 700) {
         setInputValue("");
-        setIsInputFocused(false);
         setIsShortening(false);
         setShowShortUrl(false);
         setIsCopied(false);
         setShowQr(false);
         setShowAnalytics(false);
-        setAnalytics({ clicks: "0.0", week: 0, growth: 0 });
-        setCursor({ x: 80, y: 310, visible: true, clicking: false });
+        setAnalyticsCount({ clicks: 0, week: 0, growth: 0 });
+        setCursorPos({ x: 75, y: 280, visible: true, clicking: false });
       }
 
-      // SCENE 2: Cursor glides to input and types URL (600ms - 3400ms)
-      else if (t >= 600 && t < 1100) {
-        // Gliding to input
-        const p = (t - 600) / 500;
-        setCursor({
-          x: 80 + (25 - 80) * p,
-          y: 310 + (130 - 310) * p,
+      // SCENE 2: Move cursor to input & Type URL (700ms - 3800ms)
+      else if (t >= 700 && t < 1200) {
+        // Glide cursor into the input field
+        const p = (t - 700) / 500;
+        setCursorPos({
+          x: 75 + (22 - 75) * p,
+          y: 280 + (126 - 280) * p,
           visible: true,
-          clicking: false,
+          clicking: t > 1050,
         });
         setInputValue("");
-        setIsInputFocused(false);
-      } else if (t >= 1100 && t < 1250) {
-        // Click into input
-        setIsInputFocused(true);
-        setCursor({ x: 25, y: 130, visible: true, clicking: true });
-        setInputValue("");
-      } else if (t >= 1250 && t < 3300) {
-        // Natural typing cadence
-        setIsInputFocused(true);
-        const typingDuration = 2050;
-        const typingProgress = (t - 1250) / typingDuration;
-        const charCount = Math.floor(typingProgress * FULL_URL.length);
-        setInputValue(FULL_URL.slice(0, charCount));
-        setCursor({ x: 25, y: 130, visible: true, clicking: false });
-      } else if (t >= 3300 && t < 3800) {
-        // Pause and move to Shorten button
+      } else if (t >= 1200 && t < 3600) {
+        // Typing character by character
+        const typingDuration = 2400;
+        const progressInTyping = (t - 1200) / typingDuration;
+        const charsToShow = Math.floor(progressInTyping * FULL_URL.length);
+        setInputValue(FULL_URL.slice(0, charsToShow));
+        setCursorPos({ x: 25, y: 126, visible: true, clicking: false });
+      } else if (t >= 3600 && t < 4000) {
+        // Brief pause with full text
         setInputValue(FULL_URL);
-        const p = (t - 3300) / 500;
-        setCursor({
-          x: 25 + (84 - 25) * p,
-          y: 130,
+        // Move towards Shorten button
+        const p = (t - 3600) / 400;
+        setCursorPos({
+          x: 25 + (83 - 25) * p,
+          y: 126,
           visible: true,
           clicking: false,
         });
       }
 
-      // SCENE 3: Click Shorten Button & Loading (3800ms - 5000ms)
-      else if (t >= 3800 && t < 4000) {
-        // Click Shorten
+      // SCENE 3: Click Shorten Button & Loading (4000ms - 5200ms)
+      else if (t >= 4000 && t < 4300) {
+        // Click action
         setInputValue(FULL_URL);
-        setCursor({ x: 84, y: 130, visible: true, clicking: true });
+        setCursorPos({ x: 83, y: 126, visible: true, clicking: true });
         setIsShortening(false);
-      } else if (t >= 4000 && t < 5000) {
+      } else if (t >= 4300 && t < 5200) {
         // Shortening loading state
         setInputValue(FULL_URL);
         setIsShortening(true);
-        setCursor({ x: 84, y: 130, visible: true, clicking: false });
+        setCursorPos({ x: 83, y: 126, visible: true, clicking: false });
         setShowShortUrl(false);
       }
 
-      // SCENE 4: Reveal Short URL (5000ms - 5800ms)
-      else if (t >= 5000 && t < 5800) {
+      // SCENE 4: Reveal Short URL (5200ms - 6000ms)
+      else if (t >= 5200 && t < 6000) {
         setIsShortening(false);
         setShowShortUrl(true);
-        // Move towards Copy button
-        const p = (t - 5000) / 800;
-        setCursor({
-          x: 84 + (88 - 84) * p,
-          y: 130 + (194 - 130) * p,
+        // Glide cursor towards Copy button
+        const p = (t - 5200) / 800;
+        setCursorPos({
+          x: 83 + (87 - 83) * p,
+          y: 126 + (192 - 126) * p,
           visible: true,
           clicking: false,
         });
       }
 
-      // SCENE 5: Click Copy Button & Copied Feedback (5800ms - 7200ms)
-      else if (t >= 5800 && t < 6100) {
-        // Click Copy
-        setCursor({ x: 88, y: 194, visible: true, clicking: true });
+      // SCENE 5: Click Copy Button & Copied Feedback (6000ms - 7400ms)
+      else if (t >= 6000 && t < 6300) {
+        // Click copy
+        setCursorPos({ x: 87, y: 192, visible: true, clicking: true });
         setIsCopied(true);
-      } else if (t >= 6100 && t < 7000) {
-        // Hold Copied state
-        setCursor({ x: 88, y: 194, visible: true, clicking: false });
+      } else if (t >= 6300 && t < 7200) {
+        // Hold copied state
+        setCursorPos({ x: 87, y: 192, visible: true, clicking: false });
         setIsCopied(true);
-      } else if (t >= 7000 && t < 7400) {
-        // Revert to Copy, reveal QR
+        setShowQr(true);
+      } else if (t >= 7200 && t < 7600) {
+        // Revert to Copy, reveal QR code
         setIsCopied(false);
         setShowQr(true);
-        // Move cursor downward
-        const p = (t - 7000) / 400;
-        setCursor({
-          x: 88 + (82 - 88) * p,
-          y: 194 + (300 - 194) * p,
+        // Drift cursor downward
+        const p = (t - 7200) / 400;
+        setCursorPos({
+          x: 87 + (80 - 87) * p,
+          y: 192 + (290 - 192) * p,
           visible: true,
           clicking: false,
         });
       }
 
-      // SCENE 6 & 7: QR Code & Analytics Reveal (7400ms - 9000ms)
-      else if (t >= 7400 && t < 9000) {
+      // SCENE 6 & 7: Reveal Analytics & Count up (7600ms - 9200ms)
+      else if (t >= 7600 && t < 9200) {
         setShowQr(true);
         setShowAnalytics(true);
-        setCursor({ x: 82, y: 300, visible: true, clicking: false });
+        setCursorPos({ x: 80, y: 290, visible: true, clicking: false });
 
-        // Count up numbers
-        const p = Math.min(1, (t - 7400) / 1400);
-        setAnalytics({
+        // Smooth number count up
+        const p = Math.min(1, (t - 7600) / 1200);
+        setAnalyticsCount({
           clicks: (1.2 * p).toFixed(1),
           week: Math.floor(340 * p),
           growth: Math.floor(28 * p),
         });
       }
 
-      // SCENE 8: Hold Completed State (9000ms - 11400ms)
-      else if (t >= 9000 && t < 11400) {
+      // SCENE 8: Hold Completed State (9200ms - 10500ms)
+      else if (t >= 9200 && t < 10500) {
         setShowShortUrl(true);
         setShowQr(true);
         setShowAnalytics(true);
-        setAnalytics({ clicks: "1.2", week: 340, growth: 28 });
-        setCursor({ x: 82, y: 300, visible: true, clicking: false });
+        setAnalyticsCount({ clicks: "1.2", week: 340, growth: 28 });
+        setCursorPos({ x: 80, y: 290, visible: true, clicking: false });
       }
 
-      // SCENE 9: Loop Transition (11400ms - 12000ms)
-      else if (t >= 11400) {
-        setCursor({ x: 82, y: 300, visible: true, clicking: false });
+      // SCENE 9: Smooth fade out before looping (10500ms - 11000ms)
+      else if (t >= 10500) {
+        setCursorPos({ x: 80, y: 290, visible: true, clicking: false });
       }
 
-      rafRef.current = requestAnimationFrame(runLoop);
+      rafRef.current = requestAnimationFrame(animate);
     };
 
-    rafRef.current = requestAnimationFrame(runLoop);
+    rafRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [isPlaying, viewMode]);
+  }, [isPlaying]);
 
-  // Restart live animation
-  const handleRestart = () => {
+  const handleReset = () => {
     animationTimeRef.current = 0;
     setProgress(0);
     setInputValue("");
@@ -212,365 +193,290 @@ export function UrlShortenerVideoDemo() {
     setIsCopied(false);
     setShowQr(false);
     setShowAnalytics(false);
-    setAnalytics({ clicks: "0.0", week: 0, growth: 0 });
-    setCursor({ x: 80, y: 310, visible: true, clicking: false });
-    setIsPlaying(true);
+    setAnalyticsCount({ clicks: 0, week: 0, growth: 0 });
+    setCursorPos({ x: 75, y: 280, visible: true, clicking: false });
   };
 
   return (
     <div className="relative mx-auto w-full max-w-xl">
       {/* Decorative Outer Aura Glow */}
-      <div className="absolute -inset-3 rounded-3xl bg-gradient-to-tr from-indigo-500/25 via-purple-500/20 to-blue-500/20 blur-2xl pointer-events-none" />
+      <div className="absolute -inset-2.5 rounded-3xl bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-blue-500/20 blur-xl pointer-events-none" />
 
-      {/* Main SaaS Mockup Container */}
+      {/* Main SaaS Video Player Mockup Container */}
       <div className="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-2xl shadow-indigo-600/10 transition-all">
-        {/* Top Player Header / Mode Bar */}
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/95 px-4 py-3 select-none">
-          {/* Mac-style traffic lights */}
+        {/* Top Video Header / Window Bar */}
+        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/90 px-4 py-2.5 backdrop-blur-xs select-none">
           <div className="flex items-center gap-2">
             <div className="flex gap-1.5">
-              <span className="size-2.5 rounded-full bg-red-400/90" />
-              <span className="size-2.5 rounded-full bg-amber-400/90" />
-              <span className="size-2.5 rounded-full bg-emerald-400/90" />
+              <span className="size-2.5 rounded-full bg-red-400/80" />
+              <span className="size-2.5 rounded-full bg-amber-400/80" />
+              <span className="size-2.5 rounded-full bg-emerald-400/80" />
             </div>
-            <div className="ml-2 flex items-center gap-1.5 text-xs font-bold text-slate-800">
+            <div className="ml-2 flex items-center gap-1.5 text-xs font-semibold text-slate-700">
               <Video className="size-3.5 text-indigo-600" />
-              <span className="hidden sm:inline">Product Demo</span>
+              <span>LinkHub Product Demo</span>
             </div>
           </div>
 
-          {/* Mode Switcher Tabs */}
-          <div className="flex items-center gap-1 bg-slate-200/60 p-1 rounded-xl text-xs font-semibold">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 rounded-full bg-indigo-100/70 px-2 py-0.5 text-[11px] font-bold text-indigo-700">
+              <span className="size-1.5 rounded-full bg-indigo-600 animate-pulse" />
+              <span>Live Preview</span>
+            </div>
             <button
               type="button"
-              onClick={() => {
-                setViewMode("live");
-                handleRestart();
-              }}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
-                viewMode === "live"
-                  ? "bg-white text-indigo-700 shadow-xs"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
+              onClick={() => setIsPlaying(!isPlaying)}
+              className="p-1 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-200/60 transition-colors"
+              title={isPlaying ? "Pause Demo" : "Play Demo"}
             >
-              <Sparkles className="size-3 text-indigo-600" />
-              <span>Live Animation</span>
+              {isPlaying ? <Pause className="size-3.5" /> : <Play className="size-3.5" />}
             </button>
             <button
               type="button"
-              onClick={() => setViewMode("video")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
-                viewMode === "video"
-                  ? "bg-white text-indigo-700 shadow-xs"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
+              onClick={handleReset}
+              className="p-1 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-200/60 transition-colors"
+              title="Restart Demo"
             >
-              <Video className="size-3 text-purple-600" />
-              <span>AI Video</span>
+              <RotateCcw className="size-3.5" />
             </button>
-          </div>
-
-          {/* Action Controls */}
-          <div className="flex items-center gap-1">
-            {viewMode === "live" ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setIsPlaying(!isPlaying)}
-                  className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-200/60 transition-colors"
-                  title={isPlaying ? "Pause" : "Play"}
-                >
-                  {isPlaying ? <Pause className="size-3.5" /> : <Play className="size-3.5" />}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleRestart}
-                  className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-200/60 transition-colors"
-                  title="Restart"
-                >
-                  <RotateCcw className="size-3.5" />
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  if (videoRef.current) {
-                    videoRef.current.muted = !isVideoMuted;
-                    setIsVideoMuted(!isVideoMuted);
-                  }
-                }}
-                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-200/60 transition-colors"
-                title={isVideoMuted ? "Unmute" : "Mute"}
-              >
-                {isVideoMuted ? <VolumeX className="size-3.5" /> : <Volume2 className="size-3.5" />}
-              </button>
-            )}
           </div>
         </div>
 
-        {/* VIEW MODE 1: NATIVE LIVE VECTOR ANIMATION (60FPS CRISP) */}
-        {viewMode === "live" ? (
-          <div className="relative p-6 sm:p-8 min-h-[460px] flex flex-col justify-between select-none">
-            {/* Smooth Vector Mouse Pointer */}
-            {cursor.visible && (
-              <div
-                className="pointer-events-none absolute z-50 transition-[top,left] duration-300 ease-out"
+        {/* Video Canvas / Card Surface */}
+        <div className="relative p-6 sm:p-8 min-h-[440px] flex flex-col justify-between select-none">
+          {/* Virtual Animated Mouse Cursor */}
+          {cursorPos.visible && (
+            <div
+              className="pointer-events-none absolute z-50 transition-[top,left] duration-300 ease-out"
+              style={{
+                left: `${cursorPos.x}%`,
+                top: `${cursorPos.y}px`,
+                transform: "translate(-2px, -2px)",
+              }}
+            >
+              {/* Cursor Icon */}
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                className="drop-shadow-md transition-transform duration-100"
                 style={{
-                  left: `${cursor.x}%`,
-                  top: `${cursor.y}px`,
-                  transform: "translate(-2px, -2px)",
+                  transform: cursorPos.clicking ? "scale(0.85)" : "scale(1)",
                 }}
               >
-                <svg
-                  width="26"
-                  height="26"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  className="drop-shadow-md transition-transform duration-100"
-                  style={{
-                    transform: cursor.clicking ? "scale(0.82)" : "scale(1)",
-                  }}
-                >
-                  <path
-                    d="M4 3L11 20L14 13L21 10L4 3Z"
-                    fill="#0f172a"
-                    stroke="#ffffff"
-                    strokeWidth="2"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                <path
+                  d="M4 3L11 20L14 13L21 10L4 3Z"
+                  fill="#0f172a"
+                  stroke="#ffffff"
+                  strokeWidth="2"
+                  strokeLinejoin="round"
+                />
+              </svg>
 
-                {/* Click Ripple Pulse */}
-                {cursor.clicking && (
-                  <span className="absolute -top-1 -left-1 size-7 rounded-full border-2 border-indigo-500 bg-indigo-400/30 animate-ping pointer-events-none" />
+              {/* Click Ripple Effect */}
+              {cursorPos.clicking && (
+                <span className="absolute -top-1 -left-1 size-6 rounded-full border-2 border-indigo-500 bg-indigo-400/30 animate-ping pointer-events-none" />
+              )}
+            </div>
+          )}
+
+          {/* URL Shortener UI Elements */}
+          <div className="space-y-5">
+            {/* Card Header */}
+            <div className="flex items-center gap-3.5">
+              <div className="flex size-11 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md shadow-indigo-300">
+                <Link2 className="size-5.5" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-slate-900 text-lg sm:text-xl tracking-tight leading-tight">
+                  URL Shortener
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-500">
+                  Turn long URLs into short, branded links.
+                </p>
+              </div>
+            </div>
+
+            {/* URL Input & Shorten Button Row */}
+            <div className="flex items-center gap-2.5">
+              <div
+                className={`relative flex-1 flex items-center h-12 rounded-2xl border bg-slate-50 px-4 text-xs sm:text-sm transition-all duration-200 ${
+                  inputValue
+                    ? "border-indigo-500 bg-white ring-2 ring-indigo-500/10 text-slate-900 font-medium"
+                    : "border-slate-200 text-slate-400"
+                }`}
+              >
+                <span className="truncate">
+                  {inputValue || "https://example.com/products/summer-sale"}
+                </span>
+                {inputValue.length < FULL_URL.length && inputValue.length > 0 && (
+                  <span className="ml-0.5 inline-block w-0.5 h-4 bg-indigo-600 animate-pulse" />
                 )}
               </div>
-            )}
 
-            {/* URL Shortener UI Elements */}
-            <div className="space-y-4 sm:space-y-5">
-              {/* Card Header */}
-              <div className="flex items-center gap-3.5">
-                <div className="flex size-11 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md shadow-indigo-300">
-                  <Link2 className="size-5.5" />
-                </div>
-                <div>
-                  <h3 className="font-extrabold text-slate-900 text-lg sm:text-xl tracking-tight leading-tight">
-                    URL Shortener
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-500">
-                    Turn long URLs into short, branded links.
-                  </p>
-                </div>
-              </div>
-
-              {/* URL Input & Shorten Button Row */}
-              <div className="flex items-center gap-2.5">
-                <div
-                  className={`relative flex-1 flex items-center h-12 rounded-2xl border px-4 text-xs sm:text-sm transition-all duration-200 ${
-                    isInputFocused
-                      ? "border-indigo-500 bg-white ring-2 ring-indigo-500/10 text-slate-900 font-medium shadow-xs"
-                      : "border-slate-200 bg-slate-50 text-slate-400"
-                  }`}
-                >
-                  <span className="truncate">
-                    {inputValue || (
-                      <span className="text-slate-400">
-                        https://example.com/products/summer-sale
-                      </span>
-                    )}
-                  </span>
-                  {inputValue.length < FULL_URL.length && isInputFocused && (
-                    <span className="ml-0.5 inline-block w-0.5 h-4 bg-indigo-600 animate-pulse" />
-                  )}
-                </div>
-
-                <button
-                  type="button"
-                  className={`h-12 px-5 sm:px-6 rounded-2xl font-bold text-xs sm:text-sm transition-all duration-200 flex items-center gap-1.5 shrink-0 select-none shadow-sm ${
-                    isShortening
-                      ? "bg-indigo-700 text-white scale-98"
-                      : "bg-indigo-600 hover:bg-indigo-700 text-white active:scale-98"
-                  }`}
-                >
-                  {isShortening ? (
-                    <>
-                      <Loader2 className="size-4 animate-spin" />
-                      <span>Shortening...</span>
-                    </>
-                  ) : (
-                    <span>Shorten</span>
-                  )}
-                </button>
-              </div>
-
-              {/* Generated Short URL Box */}
-              <div
-                className={`flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50/90 p-3 sm:p-3.5 transition-all duration-400 ${
-                  showShortUrl
-                    ? "opacity-100 translate-y-0 shadow-xs"
-                    : "opacity-20 translate-y-1 pointer-events-none"
+              <button
+                type="button"
+                className={`h-12 px-5 sm:px-6 rounded-2xl font-bold text-xs sm:text-sm transition-all duration-200 flex items-center gap-1.5 shrink-0 select-none shadow-sm ${
+                  isShortening
+                    ? "bg-indigo-700 text-white scale-98"
+                    : "bg-indigo-600 hover:bg-indigo-700 text-white"
                 }`}
               >
-                <div className="flex items-center gap-2 truncate">
-                  <span className="size-2 rounded-full bg-emerald-500 shrink-0" />
-                  <span className="font-mono text-xs sm:text-sm font-semibold text-slate-800 tracking-tight truncate">
-                    {SHORT_URL}
-                  </span>
-                </div>
-
-                <button
-                  type="button"
-                  className={`h-9 px-4 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-1.5 shrink-0 shadow-xs ${
-                    isCopied
-                      ? "bg-emerald-600 text-white scale-98 shadow-emerald-200"
-                      : "bg-indigo-600 text-white hover:bg-indigo-700"
-                  }`}
-                >
-                  {isCopied ? (
-                    <>
-                      <Check className="size-3.5" />
-                      <span>✓ Copied</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="size-3.5" />
-                      <span>Copy</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* QR Code and "Share via QR Code" Annotation (Matching Video) */}
-              <div
-                className={`flex items-center gap-4 transition-all duration-500 ${
-                  showQr
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-2 pointer-events-none"
-                }`}
-              >
-                {/* Clean QR Code */}
-                <div className="size-16 sm:size-18 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm flex items-center justify-center shrink-0">
-                  <svg viewBox="0 0 100 100" className="size-full text-slate-900" fill="currentColor">
-                    <rect x="0" y="0" width="30" height="30" rx="4" fill="#0f172a" />
-                    <rect x="5" y="5" width="20" height="20" rx="2" fill="#ffffff" />
-                    <rect x="10" y="10" width="10" height="10" rx="1" fill="#0f172a" />
-
-                    <rect x="70" y="0" width="30" height="30" rx="4" fill="#0f172a" />
-                    <rect x="75" y="5" width="20" height="20" rx="2" fill="#ffffff" />
-                    <rect x="80" y="10" width="10" height="10" rx="1" fill="#0f172a" />
-
-                    <rect x="0" y="70" width="30" height="30" rx="4" fill="#0f172a" />
-                    <rect x="5" y="75" width="20" height="20" rx="2" fill="#ffffff" />
-                    <rect x="10" y="80" width="10" height="10" rx="1" fill="#0f172a" />
-
-                    <rect x="36" y="8" width="8" height="8" rx="1" fill="#6366f1" />
-                    <rect x="48" y="14" width="8" height="8" rx="1" fill="#0f172a" />
-                    <rect x="36" y="24" width="8" height="8" rx="1" fill="#0f172a" />
-                    <rect x="14" y="38" width="8" height="8" rx="1" fill="#0f172a" />
-                    <rect x="26" y="48" width="8" height="8" rx="1" fill="#6366f1" />
-                    <rect x="38" y="38" width="14" height="14" rx="2" fill="#4f46e5" />
-                    <rect x="56" y="42" width="8" height="8" rx="1" fill="#0f172a" />
-                    <rect x="70" y="40" width="10" height="10" rx="1" fill="#0f172a" />
-                    <rect x="84" y="52" width="8" height="8" rx="1" fill="#6366f1" />
-                    <rect x="70" y="68" width="12" height="8" rx="1" fill="#0f172a" />
-                    <rect x="46" y="74" width="10" height="10" rx="1" fill="#0f172a" />
-                    <rect x="80" y="82" width="12" height="10" rx="1" fill="#4f46e5" />
-                  </svg>
-                </div>
-
-                {/* Annotation with Upward Curved Arrow */}
-                <div className="flex items-center gap-1.5 font-handwriting text-indigo-600 select-none">
-                  <svg
-                    width="36"
-                    height="26"
-                    viewBox="0 0 40 25"
-                    fill="none"
-                    className="stroke-indigo-500"
-                  >
-                    <path
-                      d="M38 18 C 28 22, 16 16, 6 6"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                    <path
-                      d="M6 14 L 6 6 L 14 6"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      fill="none"
-                    />
-                  </svg>
-                  <span className="text-lg sm:text-xl font-bold -mt-2">
-                    Share via QR Code
-                  </span>
-                </div>
-              </div>
+                {isShortening ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    <span>Shortening...</span>
+                  </>
+                ) : (
+                  <span>Shorten</span>
+                )}
+              </button>
             </div>
 
-            {/* Bottom Analytics Stats */}
+            {/* Generated Short URL Box */}
             <div
-              className={`mt-6 grid grid-cols-3 divide-x divide-slate-100 rounded-2xl bg-slate-50/90 p-3.5 sm:p-4 border border-slate-100 text-center transition-all duration-500 ${
-                showAnalytics
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-3 pointer-events-none"
+              className={`flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-3 sm:p-3.5 transition-all duration-400 ${
+                showShortUrl
+                  ? "opacity-100 translate-y-0 shadow-xs"
+                  : "opacity-20 translate-y-1 pointer-events-none"
               }`}
             >
-              <div className="px-1">
-                <div className="font-extrabold text-base sm:text-xl text-slate-900 tracking-tight">
-                  {analytics.clicks}K
-                </div>
-                <div className="text-[11px] sm:text-xs font-medium text-slate-500 mt-0.5">
-                  Total Clicks
-                </div>
+              <div className="flex items-center gap-2 truncate">
+                <span className="size-2 rounded-full bg-emerald-500 shrink-0" />
+                <span className="font-mono text-xs sm:text-sm font-semibold text-slate-800 tracking-tight truncate">
+                  {SHORT_URL}
+                </span>
               </div>
-              <div className="px-1">
-                <div className="font-extrabold text-base sm:text-xl text-slate-900 tracking-tight">
-                  {analytics.week}
-                </div>
-                <div className="text-[11px] sm:text-xs font-medium text-slate-500 mt-0.5">
-                  This Week
-                </div>
+
+              <button
+                type="button"
+                className={`h-9 px-4 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-1.5 shrink-0 shadow-xs ${
+                  isCopied
+                    ? "bg-emerald-600 text-white scale-98"
+                    : "bg-indigo-600 text-white hover:bg-indigo-700"
+                }`}
+              >
+                {isCopied ? (
+                  <>
+                    <Check className="size-3.5" />
+                    <span>✓ Copied</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="size-3.5" />
+                    <span>Copy</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* QR Code and Annotation */}
+            <div
+              className={`flex items-center gap-4 transition-all duration-500 ${
+                showQr ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"
+              }`}
+            >
+              {/* QR Code SVG */}
+              <div className="size-16 sm:size-18 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm flex items-center justify-center shrink-0">
+                <svg viewBox="0 0 100 100" className="size-full text-slate-900" fill="currentColor">
+                  <rect x="0" y="0" width="30" height="30" rx="4" fill="#0f172a" />
+                  <rect x="5" y="5" width="20" height="20" rx="2" fill="#ffffff" />
+                  <rect x="10" y="10" width="10" height="10" rx="1" fill="#0f172a" />
+
+                  <rect x="70" y="0" width="30" height="30" rx="4" fill="#0f172a" />
+                  <rect x="75" y="5" width="20" height="20" rx="2" fill="#ffffff" />
+                  <rect x="80" y="10" width="10" height="10" rx="1" fill="#0f172a" />
+
+                  <rect x="0" y="70" width="30" height="30" rx="4" fill="#0f172a" />
+                  <rect x="5" y="75" width="20" height="20" rx="2" fill="#ffffff" />
+                  <rect x="10" y="80" width="10" height="10" rx="1" fill="#0f172a" />
+
+                  <rect x="36" y="8" width="8" height="8" rx="1" fill="#6366f1" />
+                  <rect x="48" y="14" width="8" height="8" rx="1" fill="#0f172a" />
+                  <rect x="36" y="24" width="8" height="8" rx="1" fill="#0f172a" />
+                  <rect x="14" y="38" width="8" height="8" rx="1" fill="#0f172a" />
+                  <rect x="26" y="48" width="8" height="8" rx="1" fill="#6366f1" />
+                  <rect x="38" y="38" width="14" height="14" rx="2" fill="#4f46e5" />
+                  <rect x="56" y="42" width="8" height="8" rx="1" fill="#0f172a" />
+                  <rect x="70" y="40" width="10" height="10" rx="1" fill="#0f172a" />
+                  <rect x="84" y="52" width="8" height="8" rx="1" fill="#6366f1" />
+                  <rect x="70" y="68" width="12" height="8" rx="1" fill="#0f172a" />
+                  <rect x="46" y="74" width="10" height="10" rx="1" fill="#0f172a" />
+                  <rect x="80" y="82" width="12" height="10" rx="1" fill="#4f46e5" />
+                </svg>
               </div>
-              <div className="px-1">
-                <div className="font-extrabold text-base sm:text-xl text-emerald-600 flex items-center justify-center gap-0.5 tracking-tight">
-                  <span>↑ {analytics.growth}%</span>
-                </div>
-                <div className="text-[11px] sm:text-xs font-medium text-slate-500 mt-0.5">
-                  Growth
-                </div>
+
+              {/* Annotation */}
+              <div className="flex items-center gap-1.5 font-handwriting text-indigo-600 select-none">
+                <svg
+                  width="36"
+                  height="26"
+                  viewBox="0 0 40 25"
+                  fill="none"
+                  className="stroke-indigo-500"
+                >
+                  <path
+                    d="M38 18 C 28 22, 16 16, 6 6"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    fill="none"
+                  />
+                  <path
+                    d="M6 14 L 6 6 L 14 6"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill="none"
+                  />
+                </svg>
+                <span className="text-lg sm:text-xl font-bold -mt-2">
+                  Share via QR Code
+                </span>
               </div>
             </div>
           </div>
-        ) : (
-          /* VIEW MODE 2: RAW AI VIDEO PLAYER */
-          <div className="relative bg-slate-950 flex items-center justify-center overflow-hidden min-h-[460px]">
-            <video
-              ref={videoRef}
-              src="/url-shortener-demo.mp4"
-              autoPlay
-              loop
-              muted={isVideoMuted}
-              playsInline
-              onTimeUpdate={() => {
-                if (videoRef.current) {
-                  const curr = videoRef.current.currentTime;
-                  const dur = videoRef.current.duration || 1;
-                  setVideoProgress((curr / dur) * 100);
-                }
-              }}
-              className="w-full h-auto max-h-[480px] object-contain block select-none"
-            />
+
+          {/* Bottom Analytics Stats */}
+          <div
+            className={`mt-6 grid grid-cols-3 divide-x divide-slate-100 rounded-2xl bg-slate-50/90 p-3 sm:p-4 border border-slate-100 text-center transition-all duration-500 ${
+              showAnalytics
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-3 pointer-events-none"
+            }`}
+          >
+            <div className="px-1">
+              <div className="font-extrabold text-base sm:text-xl text-slate-900 tracking-tight">
+                {analyticsCount.clicks}K
+              </div>
+              <div className="text-[11px] sm:text-xs font-medium text-slate-500 mt-0.5">
+                Total Clicks
+              </div>
+            </div>
+            <div className="px-1">
+              <div className="font-extrabold text-base sm:text-xl text-slate-900 tracking-tight">
+                {analyticsCount.week}
+              </div>
+              <div className="text-[11px] sm:text-xs font-medium text-slate-500 mt-0.5">
+                This Week
+              </div>
+            </div>
+            <div className="px-1">
+              <div className="font-extrabold text-base sm:text-xl text-emerald-600 flex items-center justify-center gap-0.5 tracking-tight">
+                <span>↑ {analyticsCount.growth}%</span>
+              </div>
+              <div className="text-[11px] sm:text-xs font-medium text-slate-500 mt-0.5">
+                Growth
+              </div>
+            </div>
           </div>
-        )}
+        </div>
 
         {/* Video Playback Progress Bar */}
-        <div className="relative h-1.5 w-full bg-slate-100">
+        <div className="relative h-1 w-full bg-slate-100">
           <div
             className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 transition-all duration-100 ease-linear"
-            style={{ width: `${viewMode === "live" ? progress : videoProgress}%` }}
+            style={{ width: `${progress}%` }}
           />
         </div>
       </div>
