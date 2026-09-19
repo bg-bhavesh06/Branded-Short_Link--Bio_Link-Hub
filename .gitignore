@@ -9,6 +9,7 @@ lerna-debug.log*
 
 # Dependencies
 node_modules/
+server/node_modules/
 
 # Production build outputs
 dist/
@@ -23,6 +24,8 @@ exampleImages/
 .env
 .env.local
 .env.*.local
+server/.env
+server/.env.local
 
 # Editor directories
 .vscode/
