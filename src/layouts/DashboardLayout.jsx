@@ -218,21 +218,6 @@ export function DashboardLayout() {
             </div>
           </div>
 
-          {/* Right: Logout Action */}
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={async () => {
-                await logout();
-                navigate("/login");
-              }}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 hover:text-rose-700 border border-rose-200/80 shadow-2xs transition-all cursor-pointer active:scale-95"
-              aria-label="Logout"
-            >
-              <LogOut className="size-4" />
-              <span>Logout</span>
-            </button>
-          </div>
         </header>
 
         {/* Page Content */}
