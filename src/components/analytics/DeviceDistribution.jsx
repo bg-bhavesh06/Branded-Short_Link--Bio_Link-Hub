@@ -2,33 +2,38 @@ import React from "react";
 import { Smartphone, Monitor, Tablet } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
-export function DeviceDistribution({ loading = false }) {
-  const devices = [
-    {
+export function DeviceDistribution({ loading = false, data = [] }) {
+  const deviceConfigs = {
+    Mobile: {
       name: "Mobile",
-      percentage: 58,
-      clicks: 7240,
       icon: Smartphone,
-      color: "#2563eb", // blue-600
+      color: "#2563eb",
       tailwindColor: "bg-blue-600",
     },
-    {
+    Desktop: {
       name: "Desktop",
-      percentage: 34,
-      clicks: 4244,
       icon: Monitor,
-      color: "#0f172a", // slate-900
+      color: "#0f172a",
       tailwindColor: "bg-slate-900",
     },
-    {
+    Tablet: {
       name: "Tablet",
-      percentage: 8,
-      clicks: 998,
       icon: Tablet,
-      color: "#94a3b8", // slate-400
+      color: "#94a3b8",
       tailwindColor: "bg-slate-400",
     },
-  ];
+  };
+
+  const devices = ["Mobile", "Desktop", "Tablet"].map((type) => {
+    const item = data.find((d) => d.deviceType === type) || { clicks: 0, percentage: 0 };
+    return {
+      ...deviceConfigs[type],
+      clicks: item.clicks || 0,
+      percentage: item.percentage || 0,
+    };
+  });
+
+  const dominant = [...devices].sort((a, b) => b.clicks - a.clicks)[0];
 
   // SVG Donut Calculations
   const size = 160;
@@ -36,7 +41,6 @@ export function DeviceDistribution({ loading = false }) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
 
-  // Calculate cumulative offsets for SVG stroke-dasharray
   let accumulatedPercent = 0;
   const slices = devices.map((d) => {
     const strokeDasharray = `${(d.percentage / 100) * circumference} ${circumference}`;
@@ -102,9 +106,13 @@ export function DeviceDistribution({ loading = false }) {
             </svg>
 
             {/* Inner Content */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-2xl font-extrabold text-slate-900 leading-tight">58%</span>
-              <span className="text-[11px] font-medium text-slate-400">Mobile Dominant</span>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-2">
+              <span className="text-2xl font-extrabold text-slate-900 leading-tight">
+                {dominant?.percentage || 0}%
+              </span>
+              <span className="text-[11px] font-medium text-slate-400">
+                {dominant?.clicks > 0 ? `${dominant.name} Top` : "No Clicks"}
+              </span>
             </div>
           </div>
 

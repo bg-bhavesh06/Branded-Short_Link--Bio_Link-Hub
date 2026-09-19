@@ -1,13 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { QRCodeCanvas } from "qrcode.react";
 import {
   Link2,
   Plus,
   Copy,
-  Check,
   QrCode,
   BarChart3,
-  MoreHorizontal,
   Search,
   Sparkles,
   Download,
@@ -15,108 +14,218 @@ import {
   MousePointer2,
   Users,
   BarChart2,
-  Calendar,
   Youtube,
   Github,
   Globe,
   FileText,
   Instagram,
+  Loader2,
+  AlertCircle,
+  ExternalLink,
+  Trash2,
+  X,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { AnalyticsStatCard } from "@/components/analytics/AnalyticsStatCard";
+
+const API_BASE = "http://localhost:5000/api/v1/links";
+
+const getLinkIcon = (url = "") => {
+  const lower = url.toLowerCase();
+  if (lower.includes("youtube.com") || lower.includes("youtu.be")) {
+    return { icon: Youtube, color: "text-rose-600", bg: "bg-rose-50" };
+  }
+  if (lower.includes("github.com")) {
+    return { icon: Github, color: "text-slate-900", bg: "bg-slate-100" };
+  }
+  if (lower.includes("instagram.com")) {
+    return { icon: Instagram, color: "text-pink-600", bg: "bg-pink-50" };
+  }
+  if (lower.includes("drive.google.com") || lower.includes("docs.google.com") || lower.endsWith(".pdf")) {
+    return { icon: FileText, color: "text-blue-600", bg: "bg-blue-50" };
+  }
+  return { icon: Globe, color: "text-emerald-600", bg: "bg-emerald-50" };
+};
 
 export function LinksPage() {
   const navigate = useNavigate();
 
+  // Data & Pagination states
+  const [links, setLinks] = useState([]);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    totalItems: 0,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPreviousPage: false,
+  });
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState("");
+
   // Form states
   const [longUrl, setLongUrl] = useState("");
   const [customAlias, setCustomAlias] = useState("");
-  const [previewUrl, setPreviewUrl] = useState("https://linkhub.dev/r/summer-sale");
+  const [previewUrl, setPreviewUrl] = useState("http://localhost:5173/r/summer-sale");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [toastMessage, setToastMessage] = useState("");
 
+  // Modals state
+  const [qrModalLink, setQrModalLink] = useState(null);
+  const [deleteModalLink, setDeleteModalLink] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
+  // Debounce search input (300ms)
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  // Fetch real user links with search & pagination
+  const fetchLinks = useCallback(async (page = 1, search = "") => {
+    try {
+      setLoading(true);
+      setError("");
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: "10",
+        search: search.trim(),
+      });
+
+      const res = await fetch(`${API_BASE}?${params.toString()}`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        const fetchedLinks = data.data?.links || data.links || [];
+        const fetchedPagination = data.data?.pagination || data.pagination || {
+          page: 1,
+          limit: 10,
+          totalItems: fetchedLinks.length,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        };
+
+        setLinks(fetchedLinks);
+        setPagination(fetchedPagination);
+
+        if (fetchedLinks.length > 0 && !search) {
+          setPreviewUrl(fetchedLinks[0].shortUrl);
+        }
+      }
+    } catch {
+      setError("Failed to load your links. Please check server connection.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Re-fetch when debounced search or page changes
+  useEffect(() => {
+    fetchLinks(pagination.page, debouncedSearch);
+  }, [debouncedSearch, pagination.page, fetchLinks]);
+
   const handleCopy = (text) => {
+    if (!text) return;
     navigator.clipboard?.writeText?.(text);
     setToastMessage(`Link copied! ${text}`);
     setTimeout(() => setToastMessage(""), 3500);
   };
 
-  const handleShorten = (e) => {
+  const handleShorten = async (e) => {
     e.preventDefault();
-    const slug = customAlias.trim() || "link-" + Math.random().toString(36).substring(2, 7);
-    const full = `https://linkhub.dev/r/${slug}`;
-    setPreviewUrl(full);
-    handleCopy(full);
+    setError("");
+
+    if (!longUrl.trim().startsWith("http://") && !longUrl.trim().startsWith("https://")) {
+      setError("Destination URL must start with http:// or https://");
+      return;
+    }
+
+    try {
+      setCreating(true);
+      const res = await fetch(API_BASE, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          originalUrl: longUrl.trim(),
+          customSlug: customAlias.trim() || undefined,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setError(data.message || "Failed to create short link");
+        return;
+      }
+
+      setLongUrl("");
+      setCustomAlias("");
+      setPreviewUrl(data.link.shortUrl);
+      handleCopy(data.link.shortUrl);
+      // Refresh page 1 to reflect the new link
+      fetchLinks(1, debouncedSearch);
+    } catch {
+      setError("Network error while creating link. Please try again.");
+    } finally {
+      setCreating(false);
+    }
   };
 
-  const linksData = [
-    {
-      id: "1",
-      name: "YouTube Channel",
-      destination: "https://youtube.com/@bhavesh",
-      shortUrl: "linkhub.dev/r/youtube",
-      fullShortUrl: "https://linkhub.dev/r/youtube",
-      clicks: "2,341",
-      created: "Sep 12, 2025",
-      status: "Active",
-      icon: Youtube,
-      iconColor: "text-rose-600",
-      iconBg: "bg-rose-50",
-    },
-    {
-      id: "2",
-      name: "My GitHub",
-      destination: "https://github.com/bg-bhavesh",
-      shortUrl: "linkhub.dev/r/github",
-      fullShortUrl: "https://linkhub.dev/r/github",
-      clicks: "1,892",
-      created: "Sep 10, 2025",
-      status: "Active",
-      icon: Github,
-      iconColor: "text-slate-900",
-      iconBg: "bg-slate-100",
-    },
-    {
-      id: "3",
-      name: "My Portfolio",
-      destination: "https://bhavesh.dev",
-      shortUrl: "linkhub.dev/r/portfolio",
-      fullShortUrl: "https://linkhub.dev/r/portfolio",
-      clicks: "954",
-      created: "Sep 8, 2025",
-      status: "Active",
-      icon: Globe,
-      iconColor: "text-emerald-600",
-      iconBg: "bg-emerald-50",
-    },
-    {
-      id: "4",
-      name: "My Resume",
-      destination: "https://drive.google.com/resume",
-      shortUrl: "linkhub.dev/r/resume",
-      fullShortUrl: "https://linkhub.dev/r/resume",
-      clicks: "1,120",
-      created: "Sep 5, 2025",
-      status: "Active",
-      icon: FileText,
-      iconColor: "text-blue-600",
-      iconBg: "bg-blue-50",
-    },
-    {
-      id: "5",
-      name: "Instagram",
-      destination: "https://instagram.com/bg.bhavesh",
-      shortUrl: "linkhub.dev/r/instagram",
-      fullShortUrl: "https://linkhub.dev/r/instagram",
-      clicks: "876",
-      created: "Sep 2, 2025",
-      status: "Active",
-      icon: Instagram,
-      iconColor: "text-pink-600",
-      iconBg: "bg-pink-50",
-    },
-  ];
+  // Real Delete ShortLink
+  const handleDeleteConfirm = async () => {
+    if (!deleteModalLink) return;
+
+    try {
+      setDeleting(true);
+      const res = await fetch(`${API_BASE}/${deleteModalLink.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setDeleteModalLink(null);
+        setToastMessage("Short link deleted successfully");
+        setTimeout(() => setToastMessage(""), 3500);
+
+        // If deleting the last item on a page > 1, navigate to previous page
+        const nextPage = links.length === 1 && pagination.page > 1 ? pagination.page - 1 : pagination.page;
+        fetchLinks(nextPage, debouncedSearch);
+      } else {
+        alert(data.message || "Failed to delete link");
+      }
+    } catch {
+      alert("Network error while deleting link.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  // Real QR Code Download helper
+  const downloadQRCode = (shortCode, elementId = "qr-code-canvas") => {
+    const canvas = document.getElementById(elementId);
+    if (!canvas) return;
+    const pngUrl = canvas.toDataURL("image/png");
+    const downloadLink = document.createElement("a");
+    downloadLink.href = pngUrl;
+    downloadLink.download = `linkhub-${shortCode || "qr"}-qr.png`;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+  };
+
+  const totalClicksAcrossLinks = links.reduce((acc, l) => acc + (l.clicks || 0), 0);
 
   return (
     <div className="space-y-6 pb-12">
@@ -136,7 +245,7 @@ export function LinksPage() {
             const input = document.getElementById("destination-url-input");
             input?.focus();
           }}
-          className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4.5 py-2.5 font-semibold text-sm shadow-sm flex items-center gap-2 self-start sm:self-auto"
+          className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4.5 py-2.5 font-semibold text-sm shadow-sm flex items-center gap-2 self-start sm:self-auto cursor-pointer"
         >
           <Plus className="size-4 stroke-[2.5]" />
           <span>Create Short Link</span>
@@ -166,6 +275,13 @@ export function LinksPage() {
                 Fast • Secure • Branded
               </span>
             </div>
+
+            {error && (
+              <div className="mb-4 flex items-center gap-2 rounded-xl bg-rose-50 border border-rose-200/80 px-3.5 py-2 text-xs text-rose-700 font-medium animate-in fade-in">
+                <AlertCircle className="size-4 shrink-0 text-rose-600" />
+                <span>{error}</span>
+              </div>
+            )}
 
             <form onSubmit={handleShorten} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
@@ -209,10 +325,20 @@ export function LinksPage() {
                 <div className="sm:col-span-3 flex items-end">
                   <Button
                     type="submit"
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-2 font-semibold text-xs sm:text-sm shadow-xs flex items-center justify-center gap-1.5"
+                    disabled={creating}
+                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white rounded-xl py-2 font-semibold text-xs sm:text-sm shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
                   >
-                    <span>Shorten URL</span>
-                    <ArrowRight className="size-4" />
+                    {creating ? (
+                      <>
+                        <Loader2 className="size-4 animate-spin" />
+                        <span>Creating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Shorten URL</span>
+                        <ArrowRight className="size-4" />
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
@@ -221,16 +347,16 @@ export function LinksPage() {
 
           {/* Preview Row */}
           <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs sm:text-sm">
-            <div className="flex items-center gap-2">
-              <span className="text-slate-400 font-medium">Preview</span>
-              <span className="font-bold text-blue-600 font-mono tracking-tight">
+            <div className="flex items-center gap-2 overflow-hidden">
+              <span className="text-slate-400 font-medium shrink-0">Preview</span>
+              <span className="font-bold text-blue-600 font-mono tracking-tight truncate">
                 {previewUrl}
               </span>
             </div>
             <button
               type="button"
               onClick={() => handleCopy(previewUrl)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-colors self-start sm:self-auto"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-colors self-start sm:self-auto cursor-pointer"
             >
               <Copy className="size-3.5" />
               <span>Copy</span>
@@ -243,65 +369,28 @@ export function LinksPage() {
           <div>
             <h3 className="font-bold text-slate-900 text-base">Share Everywhere</h3>
             <p className="text-xs text-slate-500 mt-1 max-w-[220px]">
-              Each short link comes with a QR code for easy sharing.
+              Each short link comes with a dynamic QR code for instant scanning.
             </p>
           </div>
 
-          {/* Realistic Vector QR Code */}
-          <div className="relative my-3 p-3 rounded-2xl border border-slate-200 bg-slate-50/50 shadow-2xs">
-            <svg
-              viewBox="0 0 100 100"
-              className="size-24 sm:size-28"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              {/* Corner Position Detection Patterns */}
-              <rect x="5" y="5" width="26" height="26" rx="4" fill="#0f172a" />
-              <rect x="9" y="9" width="18" height="18" rx="2" fill="white" />
-              <rect x="13" y="13" width="10" height="10" rx="1.5" fill="#2563eb" />
-
-              <rect x="69" y="5" width="26" height="26" rx="4" fill="#0f172a" />
-              <rect x="73" y="9" width="18" height="18" rx="2" fill="white" />
-              <rect x="77" y="13" width="10" height="10" rx="1.5" fill="#2563eb" />
-
-              <rect x="5" y="69" width="26" height="26" rx="4" fill="#0f172a" />
-              <rect x="9" y="73" width="18" height="18" rx="2" fill="white" />
-              <rect x="13" y="77" width="10" height="10" rx="1.5" fill="#2563eb" />
-
-              {/* Data modules */}
-              <rect x="36" y="8" width="5" height="5" rx="1" fill="#0f172a" />
-              <rect x="46" y="8" width="8" height="5" rx="1" fill="#2563eb" />
-              <rect x="58" y="8" width="5" height="5" rx="1" fill="#0f172a" />
-              <rect x="36" y="18" width="10" height="5" rx="1" fill="#0f172a" />
-              <rect x="52" y="18" width="10" height="5" rx="1" fill="#0f172a" />
-              <rect x="8" y="36" width="5" height="8" rx="1" fill="#0f172a" />
-              <rect x="18" y="36" width="8" height="5" rx="1" fill="#2563eb" />
-              <rect x="8" y="50" width="12" height="5" rx="1" fill="#0f172a" />
-              <rect x="25" y="45" width="6" height="8" rx="1" fill="#0f172a" />
-              <rect x="36" y="36" width="28" height="28" rx="6" fill="#2563eb" />
-              <rect x="40" y="40" width="20" height="20" rx="4" fill="white" />
-              <rect x="44" y="44" width="12" height="12" rx="2" fill="#2563eb" />
-              <rect x="72" y="38" width="8" height="5" rx="1" fill="#0f172a" />
-              <rect x="85" y="38" width="8" height="8" rx="1" fill="#2563eb" />
-              <rect x="72" y="50" width="12" height="5" rx="1" fill="#0f172a" />
-              <rect x="36" y="70" width="6" height="10" rx="1" fill="#0f172a" />
-              <rect x="48" y="70" width="10" height="6" rx="1" fill="#2563eb" />
-              <rect x="62" y="70" width="6" height="8" rx="1" fill="#0f172a" />
-              <rect x="72" y="70" width="8" height="8" rx="1" fill="#0f172a" />
-              <rect x="86" y="70" width="8" height="5" rx="1" fill="#2563eb" />
-              <rect x="36" y="85" width="14" height="8" rx="1" fill="#0f172a" />
-              <rect x="56" y="85" width="8" height="8" rx="1" fill="#0f172a" />
-              <rect x="70" y="85" width="14" height="8" rx="1" fill="#2563eb" />
-            </svg>
+          {/* Real QR Code Canvas */}
+          <div className="relative my-3 p-3 rounded-2xl border border-slate-200 bg-white shadow-2xs">
+            <QRCodeCanvas
+              id="top-qr-canvas"
+              value={previewUrl}
+              size={100}
+              level="M"
+              includeMargin={false}
+            />
           </div>
 
           <Button
             variant="outline"
-            onClick={() => alert("QR Code downloaded (simulation).")}
-            className="w-full rounded-xl border-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-slate-50"
+            onClick={() => downloadQRCode("link", "top-qr-canvas")}
+            className="w-full rounded-xl border-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-slate-50 cursor-pointer"
           >
             <Download className="size-3.5" />
-            <span>Download</span>
+            <span>Download PNG</span>
           </Button>
         </Card>
       </div>
@@ -310,48 +399,55 @@ export function LinksPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         <AnalyticsStatCard
           title="Total Links"
-          value="24"
-          change="↑ 12% from last month"
+          value={pagination.totalItems.toString()}
+          change={`${pagination.totalItems} active shortened links`}
           icon={Link2}
           iconColor="text-blue-600"
           iconBg="bg-blue-50"
         />
         <AnalyticsStatCard
           title="Total Clicks"
-          value="12,482"
-          change="↑ 28% from last month"
+          value={totalClicksAcrossLinks.toLocaleString()}
+          change="Real-time telemetry tracked"
           icon={MousePointer2}
           iconColor="text-blue-600"
           iconBg="bg-blue-50"
         />
         <AnalyticsStatCard
-          title="Unique Visitors"
-          value="8,321"
-          change="↑ 18% from last month"
+          title="Avg. Clicks / Link"
+          value={
+            links.length > 0
+              ? (totalClicksAcrossLinks / links.length).toFixed(1)
+              : "0"
+          }
+          change="Across current page"
           icon={Users}
           iconColor="text-blue-600"
           iconBg="bg-blue-50"
         />
         <AnalyticsStatCard
           title="Active Links"
-          value="96%"
-          change="↑ 2% from last month"
+          value={pagination.totalItems > 0 ? "100%" : "0%"}
+          change="All links routed via HTTP 302"
           icon={BarChart2}
           iconColor="text-blue-600"
           iconBg="bg-blue-50"
         />
       </div>
 
-      {/* 4. Filter Bar */}
+      {/* 4. Filter & Search Bar */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-3 text-xs sm:text-sm">
-        {/* Search */}
+        {/* Search Input with Debounce */}
         <div className="relative w-full md:max-w-md">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search links (title, URL, or alias)..."
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setPagination((prev) => ({ ...prev, page: 1 }));
+            }}
+            placeholder="Search links by URL or short code..."
             className="w-full rounded-xl border border-slate-200/90 bg-white pl-9 pr-4 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 shadow-2xs"
           />
         </div>
@@ -359,190 +455,384 @@ export function LinksPage() {
         {/* Dropdowns */}
         <div className="flex items-center gap-2.5 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
           <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-2xs shrink-0">
-            <select className="bg-transparent border-none focus:outline-none cursor-pointer">
-              <option>All Links</option>
-              <option>Active</option>
-              <option>Archived</option>
-            </select>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-2xs shrink-0">
-            <select className="bg-transparent border-none focus:outline-none cursor-pointer">
-              <option>Active</option>
-              <option>Inactive</option>
-            </select>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-2xs shrink-0">
-            <select className="bg-transparent border-none focus:outline-none cursor-pointer">
-              <option>Last 30 days</option>
-              <option>Last 7 days</option>
-              <option>Last 90 days</option>
-            </select>
+            <span>
+              Total: {pagination.totalItems} link{pagination.totalItems !== 1 ? "s" : ""}
+            </span>
           </div>
         </div>
       </div>
 
       {/* 5. Links Table Card */}
       <Card className="rounded-3xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs sm:text-sm">
-            <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                <th className="w-10 px-4 sm:px-6 py-3.5">
-                  <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
-                </th>
-                <th className="px-4 sm:px-6 py-3.5">Destination</th>
-                <th className="px-4 sm:px-6 py-3.5">Short Link</th>
-                <th className="px-4 sm:px-6 py-3.5 text-right">Clicks</th>
-                <th className="px-4 sm:px-6 py-3.5">Created</th>
-                <th className="px-4 sm:px-6 py-3.5 text-center">Status</th>
-                <th className="px-4 sm:px-6 py-3.5 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {linksData.map((link) => {
-                const Icon = link.icon;
-                return (
-                  <tr key={link.id} className="hover:bg-slate-50/70 transition-colors">
-                    {/* Checkbox */}
-                    <td className="w-10 px-4 sm:px-6 py-4">
-                      <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
-                    </td>
+        {loading ? (
+          <div className="py-16 flex flex-col items-center justify-center text-slate-400 gap-3">
+            <Loader2 className="size-7 animate-spin text-blue-600" />
+            <span className="text-xs font-medium">Loading your short links...</span>
+          </div>
+        ) : links.length === 0 ? (
+          <div className="py-16 px-6 text-center flex flex-col items-center justify-center">
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 mb-3.5">
+              <Link2 className="size-7 rotate-45" />
+            </div>
+            <h3 className="font-bold text-slate-900 text-base">
+              {debouncedSearch ? "No matching links found" : "No short links yet"}
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-sm">
+              {debouncedSearch
+                ? `No short links matched "${debouncedSearch}". Try clearing your search.`
+                : "Enter a destination URL above to generate your first fast, branded short link!"}
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs sm:text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  <th className="px-4 sm:px-6 py-3.5">Destination</th>
+                  <th className="px-4 sm:px-6 py-3.5">Short Link</th>
+                  <th className="px-4 sm:px-6 py-3.5 text-right">Clicks</th>
+                  <th className="px-4 sm:px-6 py-3.5">Created</th>
+                  <th className="px-4 sm:px-6 py-3.5 text-center">Status</th>
+                  <th className="px-4 sm:px-6 py-3.5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {links.map((link) => {
+                  const { icon: Icon, color: iconColor, bg: iconBg } = getLinkIcon(link.originalUrl);
+                  const formattedDate = link.createdAt
+                    ? new Date(link.createdAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })
+                    : "Recently";
 
-                    {/* Destination with Icon */}
-                    <td className="px-4 sm:px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`flex size-8 items-center justify-center rounded-lg ${link.iconBg} ${link.iconColor} shrink-0`}
-                        >
-                          <Icon className="size-4" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="font-bold text-slate-900 truncate">
-                            {link.name}
+                  return (
+                    <tr key={link.id || link.shortCode} className="hover:bg-slate-50/70 transition-colors">
+                      {/* Destination with Icon */}
+                      <td className="px-4 sm:px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`flex size-8 items-center justify-center rounded-lg ${iconBg} ${iconColor} shrink-0`}
+                          >
+                            <Icon className="size-4" />
                           </div>
-                          <div className="text-xs text-slate-400 font-mono truncate max-w-[220px]">
-                            {link.destination}
+                          <div className="min-w-0 max-w-[240px] sm:max-w-xs">
+                            <a
+                              href={link.originalUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="font-bold text-slate-900 truncate hover:text-blue-600 flex items-center gap-1.5"
+                            >
+                              <span className="truncate">{link.originalUrl}</span>
+                              <ExternalLink className="size-3 shrink-0 text-slate-400" />
+                            </a>
+                            <div className="text-[11px] text-slate-400 font-mono truncate">
+                              /{link.shortCode}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Short Link with Copy */}
-                    <td className="px-4 sm:px-6 py-4 font-mono font-medium text-blue-600">
-                      <div className="inline-flex items-center gap-1.5">
-                        <span>{link.shortUrl}</span>
-                        <button
-                          type="button"
-                          onClick={() => handleCopy(link.fullShortUrl)}
-                          className="text-slate-400 hover:text-blue-600 transition-colors"
-                          title="Copy link"
-                        >
-                          <Copy className="size-3.5" />
-                        </button>
-                      </div>
-                    </td>
+                      {/* Short Link with Copy */}
+                      <td className="px-4 sm:px-6 py-4 font-mono font-medium text-blue-600">
+                        <div className="inline-flex items-center gap-1.5">
+                          <a
+                            href={link.shortUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="hover:underline"
+                          >
+                            {link.shortUrl?.replace(/^https?:\/\//, "")}
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(link.shortUrl)}
+                            className="text-slate-400 hover:text-blue-600 transition-colors cursor-pointer"
+                            title="Copy link"
+                          >
+                            <Copy className="size-3.5" />
+                          </button>
+                        </div>
+                      </td>
 
-                    {/* Clicks */}
-                    <td className="px-4 sm:px-6 py-4 text-right font-bold text-slate-900 font-mono">
-                      {link.clicks}
-                    </td>
+                      {/* Clicks */}
+                      <td className="px-4 sm:px-6 py-4 text-right font-bold text-slate-900 font-mono">
+                        {(link.clicks || 0).toLocaleString()}
+                      </td>
 
-                    {/* Created */}
-                    <td className="px-4 sm:px-6 py-4 text-slate-500 text-xs font-medium whitespace-nowrap">
-                      {link.created}
-                    </td>
+                      {/* Created */}
+                      <td className="px-4 sm:px-6 py-4 text-slate-500 text-xs font-medium whitespace-nowrap">
+                        {formattedDate}
+                      </td>
 
-                    {/* Status */}
-                    <td className="px-4 sm:px-6 py-4 text-center">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-                        <span className="size-1.5 rounded-full bg-emerald-500" />
-                        <span>Active</span>
-                      </span>
-                    </td>
+                      {/* Status */}
+                      <td className="px-4 sm:px-6 py-4 text-center">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                          <span className="size-1.5 rounded-full bg-emerald-500" />
+                          <span>Active</span>
+                        </span>
+                      </td>
 
-                    {/* Actions */}
-                    <td className="px-4 sm:px-6 py-4 text-right">
-                      <div className="inline-flex items-center gap-1 justify-end">
-                        <button
-                          type="button"
-                          onClick={() => handleCopy(link.fullShortUrl)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                          title="Copy"
-                        >
-                          <Copy className="size-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => alert(`QR Code for ${link.name}`)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                          title="QR Code"
-                        >
-                          <QrCode className="size-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => navigate("/analytics")}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                          title="View Analytics"
-                        >
-                          <BarChart3 className="size-4" />
-                        </button>
-                        <button
-                          type="button"
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                          title="More options"
-                        >
-                          <MoreHorizontal className="size-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      {/* Actions */}
+                      <td className="px-4 sm:px-6 py-4 text-right">
+                        <div className="inline-flex items-center gap-1 justify-end">
+                          {/* Copy */}
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(link.shortUrl)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                            title="Copy short link"
+                          >
+                            <Copy className="size-4" />
+                          </button>
 
-        {/* Table Footer / Pagination */}
-        <div className="px-4 sm:px-6 py-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-          <span>Showing 1 to 5 of 24 links</span>
-          <div className="flex items-center gap-1 font-semibold">
-            <button className="size-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50">
-              ‹
+                          {/* QR Modal Trigger */}
+                          <button
+                            type="button"
+                            onClick={() => setQrModalLink(link)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                            title="Generate QR Code"
+                          >
+                            <QrCode className="size-4" />
+                          </button>
+
+                          {/* Analytics */}
+                          <button
+                            type="button"
+                            onClick={() => navigate("/analytics")}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                            title="View Analytics"
+                          >
+                            <BarChart3 className="size-4" />
+                          </button>
+
+                          {/* Delete Link */}
+                          <button
+                            type="button"
+                            onClick={() => setDeleteModalLink(link)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                            title="Delete link"
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Server-Side Pagination Footer */}
+        {!loading && pagination.totalItems > 0 && (
+          <div className="px-4 sm:px-6 py-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+            <span>
+              Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
+              {Math.min(pagination.page * pagination.limit, pagination.totalItems)} of{" "}
+              {pagination.totalItems} link{pagination.totalItems !== 1 ? "s" : ""}
+            </span>
+
+            {/* Pagination Controls */}
+            {pagination.totalPages > 1 && (
+              <div className="flex items-center gap-1.5 font-semibold">
+                <button
+                  type="button"
+                  disabled={!pagination.hasPreviousPage}
+                  onClick={() =>
+                    setPagination((prev) => ({ ...prev, page: Math.max(1, prev.page - 1) }))
+                  }
+                  className="px-2.5 py-1.5 rounded-lg border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  Previous
+                </button>
+
+                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setPagination((prev) => ({ ...prev, page: p }))}
+                    className={`size-8 rounded-lg text-xs font-semibold flex items-center justify-center transition-colors cursor-pointer ${
+                      pagination.page === p
+                        ? "bg-blue-600 text-white shadow-xs"
+                        : "border border-slate-200 text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+
+                <button
+                  type="button"
+                  disabled={!pagination.hasNextPage}
+                  onClick={() =>
+                    setPagination((prev) => ({
+                      ...prev,
+                      page: Math.min(prev.totalPages, prev.page + 1),
+                    }))
+                  }
+                  className="px-2.5 py-1.5 rounded-lg border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </Card>
+
+      {/* 6. REAL QR CODE MODAL */}
+      {qrModalLink && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col items-center text-center">
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setQrModalLink(null)}
+              className="absolute right-4 top-4 p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              <X className="size-4" />
             </button>
-            <button className="size-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-xs">
-              1
-            </button>
-            <button className="size-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50">
-              2
-            </button>
-            <button className="size-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50">
-              3
-            </button>
-            <button className="size-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50">
-              4
-            </button>
-            <button className="size-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50">
-              5
-            </button>
-            <button className="size-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50">
-              ›
-            </button>
+
+            {/* Modal Header */}
+            <div className="flex size-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 mb-3">
+              <QrCode className="size-6" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900">QR Code</h3>
+            <p className="text-xs text-slate-500 mt-0.5 truncate max-w-[260px]">
+              {qrModalLink.originalUrl}
+            </p>
+
+            {/* QR Code Canvas */}
+            <div className="my-5 p-4 rounded-2xl border border-slate-200 bg-white shadow-xs">
+              <QRCodeCanvas
+                id="modal-qr-canvas"
+                value={qrModalLink.shortUrl}
+                size={180}
+                level="H"
+                includeMargin={true}
+              />
+            </div>
+
+            {/* Short URL readout */}
+            <div className="w-full bg-slate-50 rounded-xl p-2.5 mb-5 border border-slate-100 flex items-center justify-between gap-2 text-xs">
+              <span className="font-mono text-blue-600 font-semibold truncate">
+                {qrModalLink.shortUrl}
+              </span>
+              <button
+                type="button"
+                onClick={() => handleCopy(qrModalLink.shortUrl)}
+                className="p-1 rounded-md text-slate-400 hover:text-blue-600 transition-colors cursor-pointer"
+                title="Copy Link"
+              >
+                <Copy className="size-3.5" />
+              </button>
+            </div>
+
+            {/* Actions */}
+            <div className="grid grid-cols-2 gap-2.5 w-full">
+              <Button
+                variant="outline"
+                onClick={() => setQrModalLink(null)}
+                className="rounded-xl border-slate-200 text-xs font-semibold py-2.5 cursor-pointer"
+              >
+                Close
+              </Button>
+              <Button
+                onClick={() => downloadQRCode(qrModalLink.shortCode, "modal-qr-canvas")}
+                className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold py-2.5 shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Download className="size-3.5" />
+                <span>Download PNG</span>
+              </Button>
+            </div>
           </div>
         </div>
-      </Card>
+      )}
+
+      {/* 7. REAL DELETE CONFIRMATION MODAL */}
+      {deleteModalLink && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            {/* Close Button */}
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={() => setDeleteModalLink(null)}
+              className="absolute right-4 top-4 p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              <X className="size-4" />
+            </button>
+
+            {/* Modal Icon & Header */}
+            <div className="flex items-center gap-3.5 mb-4">
+              <div className="flex size-11 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 shrink-0">
+                <Trash2 className="size-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">Delete Short Link?</h3>
+                <p className="text-xs text-slate-500">This action cannot be undone.</p>
+              </div>
+            </div>
+
+            {/* Details Box */}
+            <div className="rounded-2xl border border-rose-100 bg-rose-50/40 p-3.5 mb-5 space-y-1.5 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-slate-700 w-16 shrink-0">Short Code:</span>
+                <span className="font-mono font-bold text-slate-900">/{deleteModalLink.shortCode}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-slate-700 w-16 shrink-0">Destination:</span>
+                <span className="font-mono text-slate-600 truncate">{deleteModalLink.originalUrl}</span>
+              </div>
+              <p className="text-[11px] text-rose-700 font-medium pt-1 border-t border-rose-100 mt-2">
+                Warning: Deleting this link will permanently remove all associated click history and telemetry.
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end gap-2.5">
+              <Button
+                variant="outline"
+                disabled={deleting}
+                onClick={() => setDeleteModalLink(null)}
+                className="rounded-xl border-slate-200 text-xs font-semibold py-2.5 cursor-pointer"
+              >
+                Cancel
+              </Button>
+              <Button
+                disabled={deleting}
+                onClick={handleDeleteConfirm}
+                className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold py-2.5 shadow-sm flex items-center gap-1.5 cursor-pointer"
+              >
+                {deleting ? (
+                  <>
+                    <Loader2 className="size-3.5 animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="size-3.5" />
+                    <span>Delete Link</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Floating Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-white p-4 shadow-xl shadow-emerald-500/10 animate-in slide-in-from-bottom-5">
           <div className="flex size-7 items-center justify-center rounded-full bg-emerald-500 text-white font-bold text-xs">
-            ✓
+            <Check className="size-4 stroke-[3]" />
           </div>
           <div className="text-xs">
-            <div className="font-bold text-slate-900">Link copied!</div>
-            <div className="text-slate-500 font-mono">{toastMessage.replace("Link copied! ", "")}</div>
+            <div className="font-bold text-slate-900">Success</div>
+            <div className="text-slate-500 font-mono truncate max-w-xs">{toastMessage}</div>
           </div>
         </div>
       )}

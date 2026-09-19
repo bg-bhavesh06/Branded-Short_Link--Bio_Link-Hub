@@ -1,16 +1,7 @@
 import React from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Compass, Globe } from "lucide-react";
 
-export function TopReferrersCard({ loading = false }) {
-  const referrers = [
-    { name: "Direct", clicks: 3372, percentage: 28, color: "bg-blue-600" },
-    { name: "Google", clicks: 3240, percentage: 26, color: "bg-emerald-500" },
-    { name: "Instagram", clicks: 2810, percentage: 22, color: "bg-pink-500" },
-    { name: "YouTube", clicks: 1920, percentage: 15, color: "bg-rose-500" },
-    { name: "Facebook", clicks: 1140, percentage: 9, color: "bg-sky-600" },
-  ];
-
+export function TopReferrersCard({ loading = false, data = [] }) {
   if (loading) {
     return (
       <Card className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs animate-pulse">
@@ -38,32 +29,38 @@ export function TopReferrersCard({ loading = false }) {
       </CardHeader>
 
       <CardContent className="p-4 sm:p-6 space-y-4">
-        {referrers.map((ref) => (
-          <div key={ref.name} className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs sm:text-sm">
-              <div className="flex items-center gap-2 font-semibold text-slate-800">
-                <span className="size-2 rounded-full bg-blue-600" />
-                <span>{ref.name}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="font-mono text-slate-500">
-                  {ref.clicks.toLocaleString()} clicks
-                </span>
-                <span className="font-bold text-slate-900 min-w-[32px] text-right">
-                  {ref.percentage}%
-                </span>
-              </div>
-            </div>
-
-            {/* Progress Bar */}
-            <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-blue-600 rounded-full transition-all duration-500"
-                style={{ width: `${ref.percentage * 3.5}%` }}
-              />
-            </div>
+        {data.length === 0 ? (
+          <div className="py-10 text-center text-xs text-slate-400">
+            No referrer data collected yet.
           </div>
-        ))}
+        ) : (
+          data.map((ref) => (
+            <div key={ref.referrer} className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs sm:text-sm">
+                <div className="flex items-center gap-2 font-semibold text-slate-800 truncate max-w-[180px]">
+                  <span className="size-2 rounded-full bg-blue-600 shrink-0" />
+                  <span className="truncate">{ref.referrer}</span>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="font-mono text-slate-500 text-xs">
+                    {ref.clicks.toLocaleString()} clicks
+                  </span>
+                  <span className="font-bold text-slate-900 min-w-[32px] text-right">
+                    {ref.percentage}%
+                  </span>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-blue-600 rounded-full transition-all duration-500"
+                  style={{ width: `${Math.min(ref.percentage, 100)}%` }}
+                />
+              </div>
+            </div>
+          ))
+        )}
       </CardContent>
     </Card>
   );

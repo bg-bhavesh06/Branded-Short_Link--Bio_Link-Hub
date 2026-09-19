@@ -1,12 +1,11 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   MousePointer2,
   Users,
   TrendingUp,
   RotateCcw,
   Calendar,
-  Filter,
   BarChart2,
   ArrowRight,
   RefreshCw,
@@ -21,20 +20,90 @@ import { TopReferrersCard } from "@/components/analytics/TopReferrersCard";
 import { DeviceDistribution } from "@/components/analytics/DeviceDistribution";
 import { RecentActivity } from "@/components/analytics/RecentActivity";
 
+const API_BASE = "http://localhost:5000/api/v1/analytics";
+
 export function AnalyticsPage() {
   const navigate = useNavigate();
 
-  // Filter & Control States
+  // Range and filter state
   const [timeRange, setTimeRange] = useState("30D");
   const [selectedDateRange, setSelectedDateRange] = useState("30 Days");
   const [selectedLink, setSelectedLink] = useState("All Links");
   const [selectedDevice, setSelectedDevice] = useState("All Devices");
   const [selectedReferrer, setSelectedReferrer] = useState("All Sources");
 
-  // UI Interactive States (Loading simulation & Empty state preview)
-  const [isLoading, setIsLoading] = useState(false);
-  const [isEmpty, setIsEmpty] = useState(false);
+  // Real data states
+  const [isLoading, setIsLoading] = useState(true);
+  const [userLinks, setUserLinks] = useState([]);
+  const [overviewData, setOverviewData] = useState({
+    totalClicks: 0,
+    uniqueVisitors: 0,
+    averageDailyClicks: 0,
+    returningVisitors: 0,
+  });
+  const [overTimeData, setOverTimeData] = useState([]);
+  const [topLinksData, setTopLinksData] = useState([]);
+  const [topReferrersData, setTopReferrersData] = useState([]);
+  const [devicesData, setDevicesData] = useState([]);
+  const [recentData, setRecentData] = useState([]);
   const [copiedToast, setCopiedToast] = useState("");
+
+  const rangeQuery = timeRange.toLowerCase(); // '7d', '30d', '90d'
+
+  // Fetch all analytics datasets
+  const fetchAnalytics = useCallback(async () => {
+    try {
+      setIsLoading(true);
+
+      const [overviewRes, overTimeRes, topLinksRes, referrersRes, devicesRes, recentRes, linksRes] =
+        await Promise.all([
+          fetch(`${API_BASE}/overview?range=${rangeQuery}`, { credentials: "include" }),
+          fetch(`${API_BASE}/clicks-over-time?range=${rangeQuery}`, { credentials: "include" }),
+          fetch(`${API_BASE}/top-links?range=${rangeQuery}`, { credentials: "include" }),
+          fetch(`${API_BASE}/top-referrers?range=${rangeQuery}`, { credentials: "include" }),
+          fetch(`${API_BASE}/devices?range=${rangeQuery}`, { credentials: "include" }),
+          fetch(`${API_BASE}/recent`, { credentials: "include" }),
+          fetch(`http://localhost:5000/api/v1/links`, { credentials: "include" }),
+        ]);
+
+      if (overviewRes.ok) {
+        const d = await overviewRes.json();
+        if (d.success) setOverviewData(d.data);
+      }
+      if (overTimeRes.ok) {
+        const d = await overTimeRes.json();
+        if (d.success) setOverTimeData(d.data);
+      }
+      if (topLinksRes.ok) {
+        const d = await topLinksRes.json();
+        if (d.success) setTopLinksData(d.data);
+      }
+      if (referrersRes.ok) {
+        const d = await referrersRes.json();
+        if (d.success) setTopReferrersData(d.data);
+      }
+      if (devicesRes.ok) {
+        const d = await devicesRes.json();
+        if (d.success) setDevicesData(d.data);
+      }
+      if (recentRes.ok) {
+        const d = await recentRes.json();
+        if (d.success) setRecentData(d.data);
+      }
+      if (linksRes.ok) {
+        const d = await linksRes.json();
+        if (d.success) setUserLinks(d.links || []);
+      }
+    } catch (err) {
+      console.error("Failed to load analytics:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [rangeQuery]);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
 
   const handleCopyLink = (url) => {
     navigator.clipboard?.writeText?.(url);
@@ -42,34 +111,7 @@ export function AnalyticsPage() {
     setTimeout(() => setCopiedToast(""), 3000);
   };
 
-  const simulateLoading = () => {
-    setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 900);
-  };
-
-  // Dynamic values adjusted by selected time range
-  const statData = {
-    "7D": {
-      clicks: "4,150",
-      visitors: "2,740",
-      avgDaily: "592",
-      returning: "64%",
-    },
-    "30D": {
-      clicks: "12,482",
-      visitors: "8,321",
-      avgDaily: "1,842",
-      returning: "68%",
-    },
-    "90D": {
-      clicks: "34,210",
-      visitors: "21,800",
-      avgDaily: "1,940",
-      returning: "71%",
-    },
-  };
-
-  const currentStats = statData[timeRange] || statData["30D"];
+  const isEmpty = !isLoading && overviewData.totalClicks === 0;
 
   return (
     <div className="space-y-6 pb-12">
@@ -86,36 +128,16 @@ export function AnalyticsPage() {
 
         {/* Top-Right Controls */}
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* Quick UI State Toggle Pills for Testing */}
-          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 border border-slate-200 text-xs">
-            <button
-              type="button"
-              onClick={simulateLoading}
-              title="Simulate Skeleton Loading State"
-              className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
-                isLoading
-                  ? "bg-blue-600 text-white shadow-xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-white"
-              }`}
-            >
-              <span className="flex items-center gap-1">
-                <RefreshCw className={`size-3 ${isLoading ? "animate-spin" : ""}`} />
-                Loading
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsEmpty(!isEmpty)}
-              title="Toggle Empty State"
-              className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
-                isEmpty
-                  ? "bg-slate-900 text-white shadow-xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-white"
-              }`}
-            >
-              Empty State
-            </button>
-          </div>
+          {/* Refresh Button */}
+          <Button
+            variant="outline"
+            onClick={fetchAnalytics}
+            disabled={isLoading}
+            className="rounded-xl px-3 py-2 text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+          >
+            <RefreshCw className={`size-3.5 ${isLoading ? "animate-spin" : ""}`} />
+            <span>Refresh</span>
+          </Button>
 
           {/* Date Range Selector Dropdown */}
           <div className="relative">
@@ -134,7 +156,6 @@ export function AnalyticsPage() {
                 <option value="7 Days">7 Days</option>
                 <option value="30 Days">30 Days</option>
                 <option value="90 Days">90 Days</option>
-                <option value="Custom">Custom</option>
               </select>
             </div>
           </div>
@@ -158,12 +179,12 @@ export function AnalyticsPage() {
                 onChange={(e) => setSelectedLink(e.target.value)}
                 className="w-full bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer"
               >
-                <option value="All Links">All Links (5)</option>
-                <option value="YouTube">YouTube (/r/youtube)</option>
-                <option value="GitHub">GitHub (/r/github)</option>
-                <option value="Portfolio">Portfolio (/r/portfolio)</option>
-                <option value="Resume">Resume (/r/resume)</option>
-                <option value="Instagram">Instagram (/r/instagram)</option>
+                <option value="All Links">All Links ({userLinks.length})</option>
+                {userLinks.map((l) => (
+                  <option key={l.id} value={l.shortCode}>
+                    /{l.shortCode}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -176,9 +197,9 @@ export function AnalyticsPage() {
                 className="w-full bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer"
               >
                 <option value="All Devices">All Devices</option>
-                <option value="Mobile">Mobile (58%)</option>
-                <option value="Desktop">Desktop (34%)</option>
-                <option value="Tablet">Tablet (8%)</option>
+                <option value="Mobile">Mobile</option>
+                <option value="Desktop">Desktop</option>
+                <option value="Tablet">Tablet</option>
               </select>
             </div>
 
@@ -191,11 +212,10 @@ export function AnalyticsPage() {
                 className="w-full bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer"
               >
                 <option value="All Sources">All Sources</option>
-                <option value="Direct">Direct (28%)</option>
-                <option value="Google">Google (26%)</option>
-                <option value="Instagram">Instagram (22%)</option>
-                <option value="YouTube">YouTube (15%)</option>
-                <option value="Facebook">Facebook (9%)</option>
+                <option value="Direct">Direct / None</option>
+                <option value="Google">Google</option>
+                <option value="Instagram">Instagram</option>
+                <option value="YouTube">YouTube</option>
               </select>
             </div>
           </div>
@@ -210,7 +230,7 @@ export function AnalyticsPage() {
                 setSelectedDevice("All Devices");
                 setSelectedReferrer("All Sources");
               }}
-              className="text-xs text-blue-600 hover:underline font-semibold self-end lg:self-center"
+              className="text-xs text-blue-600 hover:underline font-semibold self-end lg:self-center cursor-pointer"
             >
               Reset Filters
             </button>
@@ -218,30 +238,23 @@ export function AnalyticsPage() {
         </div>
       </div>
 
-      {/* 3. EMPTY STATE (When toggled or no data) */}
+      {/* 3. EMPTY STATE (When user has no clicks) */}
       {isEmpty ? (
         <Card className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center shadow-xs">
           <div className="flex size-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 mx-auto mb-4">
             <BarChart2 className="size-8" />
           </div>
-          <h3 className="text-xl font-bold text-slate-900">No analytics yet</h3>
+          <h3 className="text-xl font-bold text-slate-900">No click data yet</h3>
           <p className="mt-2 text-sm text-slate-500 max-w-sm mx-auto">
-            Share your short links to start collecting click data, referrers, and visitor insights.
+            Share your short links to start collecting real-time click telemetry, referrers, and visitor insights.
           </p>
           <div className="mt-6 flex items-center justify-center gap-3">
             <Button
               onClick={() => navigate("/links")}
-              className="bg-slate-950 hover:bg-slate-800 text-white rounded-xl px-5 py-2.5 font-semibold text-sm shadow-sm flex items-center gap-2"
+              className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-2.5 font-semibold text-sm shadow-sm flex items-center gap-2 cursor-pointer"
             >
-              <span>View Links</span>
+              <span>View & Create Links</span>
               <ArrowRight className="size-4" />
-            </Button>
-            <Button
-              onClick={() => setIsEmpty(false)}
-              variant="outline"
-              className="rounded-xl"
-            >
-              Show Demo Data
             </Button>
           </div>
         </Card>
@@ -251,8 +264,8 @@ export function AnalyticsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
             <AnalyticsStatCard
               title="Total Clicks"
-              value={currentStats.clicks}
-              change="↑ 28% from last month"
+              value={overviewData.totalClicks.toLocaleString()}
+              change={`Across selected ${timeRange.toLowerCase()} period`}
               icon={MousePointer2}
               iconColor="text-blue-600"
               iconBg="bg-blue-50"
@@ -260,8 +273,8 @@ export function AnalyticsPage() {
             />
             <AnalyticsStatCard
               title="Unique Visitors"
-              value={currentStats.visitors}
-              change="↑ 18% from last month"
+              value={overviewData.uniqueVisitors.toLocaleString()}
+              change="Based on privacy-safe hashed IPs"
               icon={Users}
               iconColor="text-blue-600"
               iconBg="bg-blue-50"
@@ -269,8 +282,8 @@ export function AnalyticsPage() {
             />
             <AnalyticsStatCard
               title="Average Daily Clicks"
-              value={currentStats.avgDaily}
-              change="↑ 12% from last month"
+              value={overviewData.averageDailyClicks.toString()}
+              change={`Average over ${timeRange.toLowerCase()}`}
               icon={TrendingUp}
               iconColor="text-blue-600"
               iconBg="bg-blue-50"
@@ -278,8 +291,8 @@ export function AnalyticsPage() {
             />
             <AnalyticsStatCard
               title="Returning Visitors"
-              value={currentStats.returning}
-              change="↑ 8% from last month"
+              value={overviewData.returningVisitors.toLocaleString()}
+              change="Visitors with >1 click in period"
               icon={RotateCcw}
               iconColor="text-blue-600"
               iconBg="bg-blue-50"
@@ -290,6 +303,7 @@ export function AnalyticsPage() {
           {/* 5. CLICKS OVER TIME (Large Area/Line Chart) */}
           <ClicksChart
             timeRange={timeRange}
+            data={overTimeData}
             onRangeChange={(r) => {
               setTimeRange(r);
               if (r === "7D") setSelectedDateRange("7 Days");
@@ -304,22 +318,23 @@ export function AnalyticsPage() {
             <div className="lg:col-span-7">
               <TopLinksCard
                 loading={isLoading}
+                data={topLinksData}
                 onCopyLink={handleCopyLink}
                 copiedLink={copiedToast}
               />
             </div>
             <div className="lg:col-span-5">
-              <TopReferrersCard loading={isLoading} />
+              <TopReferrersCard loading={isLoading} data={topReferrersData} />
             </div>
           </div>
 
           {/* 7. TWO-COLUMN: DEVICE DISTRIBUTION & RECENT ACTIVITY */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             <div className="lg:col-span-5">
-              <DeviceDistribution loading={isLoading} />
+              <DeviceDistribution loading={isLoading} data={devicesData} />
             </div>
             <div className="lg:col-span-7">
-              <RecentActivity loading={isLoading} />
+              <RecentActivity loading={isLoading} data={recentData} />
             </div>
           </div>
         </>
@@ -333,7 +348,7 @@ export function AnalyticsPage() {
           </div>
           <div className="text-xs">
             <div className="font-bold text-slate-900">Link copied!</div>
-            <div className="text-slate-500 font-mono">{copiedToast}</div>
+            <div className="text-slate-500 font-mono truncate max-w-xs">{copiedToast}</div>
           </div>
         </div>
       )}

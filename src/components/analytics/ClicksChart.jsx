@@ -1,35 +1,40 @@
 import React, { useState } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 
-export function ClicksChart({ timeRange = "7D", onRangeChange, loading = false }) {
+export function ClicksChart({ timeRange = "7D", onRangeChange, loading = false, data = null }) {
   const [hoveredPoint, setHoveredPoint] = useState(null);
 
-  // Mock data sets for 7D, 30D, 90D
-  const datasets = {
-    "7D": [
-      { label: "Mon", fullDate: "Sep 15", value: 420 },
-      { label: "Tue", fullDate: "Sep 16", value: 580 },
-      { label: "Wed", fullDate: "Sep 17", value: 510 },
-      { label: "Thu", fullDate: "Sep 18", value: 760 },
-      { label: "Fri", fullDate: "Sep 19", value: 920 },
-      { label: "Sat", fullDate: "Sep 20", value: 840 },
-      { label: "Sun", fullDate: "Sep 21", value: 1020 },
-    ],
-    "30D": [
-      { label: "W1", fullDate: "Sep 1 - 7", value: 2450 },
-      { label: "W2", fullDate: "Sep 8 - 14", value: 2980 },
-      { label: "W3", fullDate: "Sep 15 - 21", value: 3410 },
-      { label: "W4", fullDate: "Sep 22 - 28", value: 3642 },
-    ],
-    "90D": [
-      { label: "Jul", fullDate: "July 2025", value: 9800 },
-      { label: "Aug", fullDate: "August 2025", value: 11250 },
-      { label: "Sep", fullDate: "September 2025", value: 12482 },
-    ],
-  };
+  // If real API data is provided, format labels; otherwise fallback to empty/clean array
+  const formattedData = React.useMemo(() => {
+    if (data && Array.isArray(data) && data.length > 0) {
+      return data.map((item) => {
+        const d = new Date(item.date);
+        const dayName = d.toLocaleDateString("en-US", { weekday: "short" });
+        const monthDay = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        const label = data.length <= 7 ? dayName : data.length <= 31 ? `${d.getDate()}` : monthDay;
+        return {
+          label,
+          fullDate: monthDay,
+          value: item.clicks || 0,
+        };
+      });
+    }
 
-  const currentData = datasets[timeRange] || datasets["7D"];
-  const maxVal = Math.max(...currentData.map((d) => d.value)) * 1.15;
+    // Default zero dataset if no data
+    return [
+      { label: "Day 1", fullDate: "Day 1", value: 0 },
+      { label: "Day 2", fullDate: "Day 2", value: 0 },
+      { label: "Day 3", fullDate: "Day 3", value: 0 },
+      { label: "Day 4", fullDate: "Day 4", value: 0 },
+      { label: "Day 5", fullDate: "Day 5", value: 0 },
+      { label: "Day 6", fullDate: "Day 6", value: 0 },
+      { label: "Day 7", fullDate: "Day 7", value: 0 },
+    ];
+  }, [data]);
+
+  const currentData = formattedData;
+  const rawMax = Math.max(...currentData.map((d) => d.value));
+  const maxVal = rawMax > 0 ? rawMax * 1.15 : 10;
   const minVal = 0;
 
   // SVG Chart Dimensions
@@ -42,7 +47,7 @@ export function ClicksChart({ timeRange = "7D", onRangeChange, loading = false }
 
   // Coordinates calculation
   const points = currentData.map((d, index) => {
-    const x = paddingX + (index / (currentData.length - 1)) * chartWidth;
+    const x = paddingX + (index / Math.max(currentData.length - 1, 1)) * chartWidth;
     const y = height - paddingY - ((d.value - minVal) / (maxVal - minVal)) * chartHeight;
     return { ...d, x, y };
   });
@@ -50,7 +55,6 @@ export function ClicksChart({ timeRange = "7D", onRangeChange, loading = false }
   // Construct SVG paths
   const linePath = points.reduce((acc, point, i) => {
     if (i === 0) return `M ${point.x} ${point.y}`;
-    // Smooth cubic curve
     const prev = points[i - 1];
     const cp1x = prev.x + (point.x - prev.x) / 2;
     const cp1y = prev.y;
@@ -93,7 +97,7 @@ export function ClicksChart({ timeRange = "7D", onRangeChange, loading = false }
               key={range}
               type="button"
               onClick={() => onRangeChange?.(range)}
-              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
+              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                 timeRange === range
                   ? "bg-white text-blue-600 shadow-xs"
                   : "text-slate-600 hover:text-slate-900"
@@ -162,7 +166,13 @@ export function ClicksChart({ timeRange = "7D", onRangeChange, loading = false }
 
             {/* Interactive Data Points */}
             {points.map((pt, i) => {
-              const isHovered = hoveredPoint?.label === pt.label;
+              const isHovered = hoveredPoint?.x === pt.x;
+              // Skip some labels on dense charts (30D, 90D)
+              const showLabel =
+                points.length <= 7 ||
+                i % Math.ceil(points.length / 7) === 0 ||
+                i === points.length - 1;
+
               return (
                 <g
                   key={i}
@@ -170,10 +180,8 @@ export function ClicksChart({ timeRange = "7D", onRangeChange, loading = false }
                   onMouseEnter={() => setHoveredPoint(pt)}
                   onMouseLeave={() => setHoveredPoint(null)}
                 >
-                  {/* Invisible touch/hover target */}
                   <circle cx={pt.x} cy={pt.y} r="14" fill="transparent" />
 
-                  {/* Outer circle on hover */}
                   {isHovered && (
                     <circle
                       cx={pt.x}
@@ -185,7 +193,6 @@ export function ClicksChart({ timeRange = "7D", onRangeChange, loading = false }
                     />
                   )}
 
-                  {/* Dot */}
                   <circle
                     cx={pt.x}
                     cy={pt.y}
@@ -196,17 +203,18 @@ export function ClicksChart({ timeRange = "7D", onRangeChange, loading = false }
                     className="transition-all duration-150"
                   />
 
-                  {/* X Axis Label */}
-                  <text
-                    x={pt.x}
-                    y={height - 6}
-                    textAnchor="middle"
-                    className={`text-[11px] font-medium transition-colors ${
-                      isHovered ? "fill-blue-600 font-bold" : "fill-slate-500"
-                    }`}
-                  >
-                    {pt.label}
-                  </text>
+                  {showLabel && (
+                    <text
+                      x={pt.x}
+                      y={height - 6}
+                      textAnchor="middle"
+                      className={`text-[11px] font-medium transition-colors ${
+                        isHovered ? "fill-blue-600 font-bold" : "fill-slate-500"
+                      }`}
+                    >
+                      {pt.label}
+                    </text>
+                  )}
                 </g>
               );
             })}

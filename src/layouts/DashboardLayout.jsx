@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 import {
   Link2,
   Home,
@@ -18,6 +19,7 @@ import {
 export function DashboardLayout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -26,7 +28,7 @@ export function DashboardLayout() {
     { label: "Links", icon: Link2, path: "/links" },
     { label: "Analytics", icon: BarChart3, path: "/analytics" },
     { label: "Bio Builder", icon: LayoutGrid, path: "/bio-builder" },
-    { label: "Settings", icon: Settings, path: "/links" },
+    { label: "Settings", icon: Settings, path: "/settings" },
   ];
 
   const currentPath = location.pathname;
@@ -53,12 +55,16 @@ export function DashboardLayout() {
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive =
-              item.label === "Analytics"
+              item.label === "Settings"
+                ? currentPath === "/settings"
+                : item.label === "Analytics"
                 ? currentPath === "/analytics"
                 : item.label === "Links"
                 ? currentPath === "/links"
                 : item.label === "Bio Builder"
                 ? currentPath === "/bio-builder"
+                : item.label === "Overview"
+                ? currentPath === "/overview" || currentPath === "/dashboard"
                 : false;
 
             return (
@@ -111,20 +117,38 @@ export function DashboardLayout() {
         </div>
 
         {/* User Profile */}
-        <div className="flex items-center gap-3 px-2 py-1">
-          <div className="flex size-9 items-center justify-center rounded-full bg-indigo-100 text-indigo-700 font-bold text-sm shrink-0 border border-indigo-200">
-            B
-          </div>
+        <div
+          onClick={() => navigate("/settings")}
+          className="flex items-center gap-3 px-2 py-1.5 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors"
+        >
+          {user?.avatar ? (
+            <img
+              src={user.avatar}
+              alt="Avatar"
+              className="size-9 rounded-full object-cover border border-slate-200"
+            />
+          ) : (
+            <div className="flex size-9 items-center justify-center rounded-full bg-indigo-100 text-indigo-700 font-bold text-sm shrink-0 border border-indigo-200">
+              {(user?.name || "B").charAt(0).toUpperCase()}
+            </div>
+          )}
           <div className="flex flex-col min-w-0 flex-1">
-            <span className="text-xs font-semibold text-slate-900 truncate">Bhavesh Ganwani</span>
-            <span className="text-[11px] text-slate-400 truncate">bhaveshganwani37@gmail.com</span>
+            <span className="text-xs font-semibold text-slate-900 truncate">
+              {user?.name || "Bhavesh Ganwani"}
+            </span>
+            <span className="text-[11px] text-slate-400 truncate">
+              {user?.email || "bhaveshganwani37@gmail.com"}
+            </span>
           </div>
         </div>
 
         {/* Logout */}
         <button
           type="button"
-          onClick={() => navigate("/")}
+          onClick={async () => {
+            await logout();
+            navigate("/login");
+          }}
           className="flex w-full items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:text-rose-600 transition-colors rounded-lg hover:bg-rose-50/50"
         >
           <LogOut className="size-4" />
@@ -207,13 +231,28 @@ export function DashboardLayout() {
             </button>
 
             {/* Profile Chip */}
-            <div className="flex items-center gap-2.5 pl-2 border-l border-slate-200 cursor-pointer select-none">
-              <div className="flex size-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs border border-indigo-200">
-                B
-              </div>
+            <div
+              onClick={() => navigate("/settings")}
+              className="flex items-center gap-2.5 pl-2 border-l border-slate-200 cursor-pointer select-none hover:opacity-80 transition-opacity"
+            >
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt="Avatar"
+                  className="size-8 rounded-full object-cover border border-slate-200"
+                />
+              ) : (
+                <div className="flex size-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs border border-indigo-200">
+                  {(user?.name || "B").charAt(0).toUpperCase()}
+                </div>
+              )}
               <div className="hidden md:flex flex-col text-left">
-                <span className="text-xs font-bold text-slate-900 leading-tight">Bhavesh</span>
-                <span className="text-[10px] text-slate-400 leading-tight">Creator</span>
+                <span className="text-xs font-bold text-slate-900 leading-tight">
+                  {user?.name?.split(" ")[0] || "Bhavesh"}
+                </span>
+                <span className="text-[10px] text-slate-400 leading-tight">
+                  @{user?.username || "creator"}
+                </span>
               </div>
               <ChevronDown className="size-3.5 text-slate-400 hidden md:block" />
             </div>
@@ -221,7 +260,7 @@ export function DashboardLayout() {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4 pb-8 max-w-7xl w-full mx-auto">
           <Outlet />
         </main>
       </div>
