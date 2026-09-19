@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { CheckCircle2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { UrlShortenerPreview } from "@/components/UrlShortenerPreview";
-import { BioPreview } from "@/components/BioPreview";
+import { UrlShortenerVideoDemo } from "@/components/UrlShortenerVideoDemo";
 
 export function Hero() {
   const navigate = useNavigate();
@@ -16,7 +15,7 @@ export function Hero() {
       <div className="absolute top-1/3 right-10 -z-10 size-96 rounded-full bg-indigo-200/30 blur-3xl pointer-events-none" />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-10 items-center">
           {/* Left Column: Hero Content */}
           <div className="lg:col-span-5 flex flex-col items-start text-left">
             {/* Small Badge */}
@@ -81,72 +80,9 @@ export function Hero() {
             </div>
           </div>
 
-          {/* Right Column: Interactive Product Previews */}
-          <div className="lg:col-span-7 relative">
-            {/* Whimsical Handwritten Annotations on Desktop */}
-            <div className="hidden sm:block absolute -top-8 left-12 z-20 font-handwriting text-indigo-600 select-none">
-              <div className="flex items-center gap-1">
-                <span className="text-xl font-bold">Turn this...</span>
-                <svg
-                  width="36"
-                  height="24"
-                  viewBox="0 0 40 28"
-                  fill="none"
-                  className="stroke-indigo-500"
-                >
-                  <path
-                    d="M6 6 C 18 10, 28 18, 30 24"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    fill="none"
-                  />
-                  <path
-                    d="M22 24 L 30 24 L 30 16"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    fill="none"
-                  />
-                </svg>
-              </div>
-            </div>
-
-            <div className="hidden sm:block absolute -top-8 right-16 z-20 font-handwriting text-indigo-600 select-none">
-              <div className="flex items-center gap-1">
-                <span className="text-xl font-bold">...into this!</span>
-                <svg
-                  width="36"
-                  height="24"
-                  viewBox="0 0 40 28"
-                  fill="none"
-                  className="stroke-indigo-500"
-                >
-                  <path
-                    d="M34 6 C 24 10, 14 18, 12 24"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    fill="none"
-                  />
-                  <path
-                    d="M12 16 L 12 24 L 20 24"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    fill="none"
-                  />
-                </svg>
-              </div>
-            </div>
-
-            {/* Dual Previews Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6 items-start justify-items-center">
-              <div className="w-full flex justify-center">
-                <UrlShortenerPreview />
-              </div>
-              <div className="w-full flex justify-center">
-                <BioPreview />
-              </div>
-            </div>
+          {/* Right Column: Automated URL Shortener Product Demo Video */}
+          <div className="lg:col-span-7 flex justify-center w-full">
+            <UrlShortenerVideoDemo />
           </div>
         </div>
       </div>
