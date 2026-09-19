@@ -10,9 +10,4 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-  server: {
-    watch: {
-      ignored: ['**/Video/**', '**/*.mp4'],
-    },
-  },
 });
