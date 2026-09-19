@@ -23,7 +23,7 @@ export function Input({
       className={
         cn(
           !unstyled &&
-            "relative inline-flex w-full items-center rounded-xl border border-slate-200 bg-white text-base shadow-xs transition-all duration-150 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 sm:text-sm",
+            "relative inline-flex w-full items-center rounded-xl border border-slate-200 bg-white text-base shadow-xs transition-all duration-150 focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-600/20 sm:text-sm",
           className,
         ) || undefined
       }

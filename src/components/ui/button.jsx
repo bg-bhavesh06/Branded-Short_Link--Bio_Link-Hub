@@ -7,7 +7,7 @@ import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 export const buttonVariants = cva(
-  "relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-xl font-medium text-sm outline-none transition-all duration-150 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 select-none",
+  "relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-xl font-medium text-sm outline-none transition-all duration-150 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 select-none",
   {
     defaultVariants: {
       size: "default",
@@ -24,17 +24,17 @@ export const buttonVariants = cva(
       },
       variant: {
         default:
-          "bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 active:bg-indigo-800",
+          "bg-blue-600 text-white shadow-sm hover:bg-blue-700 active:bg-blue-800",
         primary:
-          "bg-[#4f46e5] text-white shadow-md shadow-indigo-200 hover:bg-[#4338ca] active:bg-[#3730a3]",
+          "bg-slate-950 text-white shadow-md shadow-slate-950/10 hover:bg-slate-800 active:bg-black",
         outline:
-          "border border-slate-200 bg-white text-slate-800 shadow-sm hover:bg-slate-50 hover:border-slate-300 active:bg-slate-100",
+          "border border-slate-200 bg-white text-slate-900 shadow-xs hover:bg-slate-50 hover:border-slate-300 active:bg-slate-100",
         secondary:
           "bg-slate-100 text-slate-900 hover:bg-slate-200 active:bg-slate-300",
         ghost:
           "text-slate-600 hover:text-slate-900 hover:bg-slate-100",
         link:
-          "text-indigo-600 underline-offset-4 hover:underline p-0 h-auto",
+          "text-blue-600 underline-offset-4 hover:underline p-0 h-auto",
       },
     },
   }

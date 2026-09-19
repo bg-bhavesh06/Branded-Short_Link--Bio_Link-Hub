@@ -45,12 +45,12 @@ export function PricingPage() {
       <div className="mb-6 flex items-center justify-between">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors"
+          className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors"
         >
           <ArrowLeft className="size-4" />
           Back to Home
         </Link>
-        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
           Transparent Pricing
         </span>
       </div>
@@ -70,12 +70,12 @@ export function PricingPage() {
             key={plan.name}
             className={`rounded-3xl border p-8 relative flex flex-col justify-between ${
               plan.popular
-                ? "border-indigo-500 shadow-xl shadow-indigo-500/10 ring-2 ring-indigo-500/20"
+                ? "border-blue-600 shadow-xl shadow-blue-500/10 ring-2 ring-blue-600/20"
                 : "border-slate-200 shadow-sm"
             }`}
           >
             {plan.popular && (
-              <span className="absolute -top-3 right-8 bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
+              <span className="absolute -top-3 right-8 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
                 Most Popular
               </span>
             )}
@@ -106,7 +106,7 @@ export function PricingPage() {
                 <Button
                   variant={plan.variant}
                   className={`w-full rounded-xl py-2.5 font-semibold text-sm ${
-                    plan.popular ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md" : ""
+                    plan.popular ? "bg-blue-600 hover:bg-blue-700 text-white shadow-md" : ""
                   }`}
                 >
                   {plan.cta}

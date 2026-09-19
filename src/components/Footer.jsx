@@ -9,12 +9,12 @@ export function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 lg:gap-12">
           {/* Brand Column */}
           <div className="col-span-2 space-y-4">
-            <Link to="/" className="flex items-center gap-2.5 font-bold text-xl tracking-tight text-slate-900">
-              <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-tr from-indigo-600 to-purple-600 text-white shadow-xs">
+            <Link to="/" className="flex items-center gap-2.5 font-bold text-xl tracking-tight text-slate-900 group">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-blue-600 text-white shadow-xs group-hover:scale-105 transition-transform">
                 <Link2 className="size-4.5 rotate-45" />
               </div>
               <span className="font-extrabold text-xl tracking-tight text-slate-900">
-                Link<span className="text-indigo-600">Hub</span>
+                Link<span className="text-blue-600">Hub</span>
               </span>
             </Link>
             <p className="text-sm text-slate-500 max-w-sm leading-relaxed">
@@ -29,22 +29,22 @@ export function Footer() {
             </h5>
             <ul className="space-y-2 text-sm text-slate-600">
               <li>
-                <Link to="/links" className="hover:text-indigo-600 transition-colors">
+                <Link to="/links" className="hover:text-blue-600 transition-colors">
                   URL Shortener
                 </Link>
               </li>
               <li>
-                <Link to="/bio-builder" className="hover:text-indigo-600 transition-colors">
+                <Link to="/bio-builder" className="hover:text-blue-600 transition-colors">
                   Link-in-Bio
                 </Link>
               </li>
               <li>
-                <Link to="/analytics" className="hover:text-indigo-600 transition-colors">
+                <Link to="/analytics" className="hover:text-blue-600 transition-colors">
                   Analytics
                 </Link>
               </li>
               <li>
-                <Link to="/links" className="hover:text-indigo-600 transition-colors">
+                <Link to="/links" className="hover:text-blue-600 transition-colors">
                   QR Codes
                 </Link>
               </li>
@@ -58,17 +58,17 @@ export function Footer() {
             </h5>
             <ul className="space-y-2 text-sm text-slate-600">
               <li>
-                <Link to="/blog" className="hover:text-indigo-600 transition-colors">
+                <Link to="/blog" className="hover:text-blue-600 transition-colors">
                   Documentation
                 </Link>
               </li>
               <li>
-                <Link to="/about" className="hover:text-indigo-600 transition-colors">
+                <Link to="/about" className="hover:text-blue-600 transition-colors">
                   API
                 </Link>
               </li>
               <li>
-                <Link to="/features" className="hover:text-indigo-600 transition-colors">
+                <Link to="/features" className="hover:text-blue-600 transition-colors">
                   Changelog
                 </Link>
               </li>
@@ -82,17 +82,17 @@ export function Footer() {
             </h5>
             <ul className="space-y-2 text-sm text-slate-600">
               <li>
-                <Link to="/about" className="hover:text-indigo-600 transition-colors">
+                <Link to="/about" className="hover:text-blue-600 transition-colors">
                   About
                 </Link>
               </li>
               <li>
-                <Link to="/blog" className="hover:text-indigo-600 transition-colors">
+                <Link to="/blog" className="hover:text-blue-600 transition-colors">
                   Blog
                 </Link>
               </li>
               <li>
-                <Link to="/pricing" className="hover:text-indigo-600 transition-colors">
+                <Link to="/pricing" className="hover:text-blue-600 transition-colors">
                   Pricing
                 </Link>
               </li>

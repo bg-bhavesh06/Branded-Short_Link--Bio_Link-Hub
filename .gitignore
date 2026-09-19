@@ -17,6 +17,7 @@ dist-ssr/
 # Raw video scratch
 Video/
 video/
+exampleImages/
 
 # Local env files
 .env

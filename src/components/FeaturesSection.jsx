@@ -7,29 +7,29 @@ export function FeaturesSection() {
   const features = [
     {
       icon: Link2,
-      iconBg: "bg-indigo-50",
-      iconColor: "text-indigo-600",
+      iconBg: "bg-blue-50",
+      iconColor: "text-blue-600",
       title: "URL Shortener",
       description: "Create short, branded links with custom slugs.",
     },
     {
       icon: BarChart2,
-      iconBg: "bg-blue-50",
-      iconColor: "text-blue-600",
+      iconBg: "bg-slate-100",
+      iconColor: "text-slate-900",
       title: "Click Analytics",
       description: "Track clicks, referrers, devices and more.",
     },
     {
       icon: QrCode,
-      iconBg: "bg-cyan-50",
-      iconColor: "text-cyan-600",
+      iconBg: "bg-sky-50",
+      iconColor: "text-sky-600",
       title: "QR Code Generation",
       description: "Generate QR codes for your links instantly.",
     },
     {
       icon: User,
-      iconBg: "bg-rose-50",
-      iconColor: "text-rose-500",
+      iconBg: "bg-slate-900",
+      iconColor: "text-white",
       title: "Link-in-Bio Pages",
       description: "Build a customizable bio page with multiple links and themes.",
     },
@@ -41,7 +41,7 @@ export function FeaturesSection() {
         {/* Section Pill Badge */}
         <Badge
           variant="default"
-          className="mb-4 bg-indigo-50 text-indigo-700 border-indigo-200/60 px-3.5 py-1 text-xs font-bold tracking-wider uppercase rounded-full"
+          className="mb-4 bg-blue-50 text-blue-700 border-blue-200/80 px-3.5 py-1 text-xs font-bold tracking-wider uppercase rounded-full"
         >
           WHAT YOU CAN DO
         </Badge>

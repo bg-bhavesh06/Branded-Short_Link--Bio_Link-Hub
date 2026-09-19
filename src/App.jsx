@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { MainLayout } from "@/layouts/MainLayout";
+import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { LandingPage } from "@/pages/LandingPage";
 import { LinksPage } from "@/pages/LinksPage";
 import { BioBuilderPage } from "@/pages/BioBuilderPage";
@@ -16,11 +17,18 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Authenticated Dashboard Routes (Shared DashboardLayout) */}
+        <Route element={<DashboardLayout />}>
+          <Route path="/links" element={<LinksPage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/overview" element={<Navigate to="/links" replace />} />
+          <Route path="/dashboard" element={<Navigate to="/links" replace />} />
+        </Route>
+
+        {/* Public & Marketing Routes (MainLayout with Navbar & Footer) */}
         <Route element={<MainLayout />}>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/links" element={<LinksPage />} />
           <Route path="/bio-builder" element={<BioBuilderPage />} />
-          <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/features" element={<FeaturesPage />} />
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/blog" element={<BlogPage />} />

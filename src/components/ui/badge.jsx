@@ -21,9 +21,9 @@ export const badgeVariants = cva(
       },
       variant: {
         default:
-          "bg-indigo-50 text-indigo-700 border border-indigo-200/60 font-semibold",
+          "bg-blue-50/80 text-blue-700 border border-blue-200/80 font-semibold",
         primary:
-          "bg-indigo-600 text-white",
+          "bg-slate-950 text-white",
         secondary:
           "bg-slate-100 text-slate-700 border border-slate-200/80",
         outline:

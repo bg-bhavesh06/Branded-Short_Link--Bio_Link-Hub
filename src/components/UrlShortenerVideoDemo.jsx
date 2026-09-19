@@ -198,12 +198,12 @@ export function UrlShortenerVideoDemo() {
   };
 
   return (
-    <div className="relative mx-auto w-full max-w-xl">
+    <div className="relative mx-auto w-full max-w-[420px] sm:max-w-[430px]">
       {/* Decorative Outer Aura Glow */}
-      <div className="absolute -inset-2.5 rounded-3xl bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-blue-500/20 blur-xl pointer-events-none" />
+      <div className="absolute -inset-2.5 rounded-3xl bg-gradient-to-r from-blue-500/10 via-slate-300/20 to-blue-600/10 blur-xl pointer-events-none" />
 
       {/* Main SaaS Video Player Mockup Container */}
-      <div className="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-2xl shadow-indigo-600/10 transition-all">
+      <div className="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-2xl shadow-slate-950/5 transition-all">
         {/* Top Video Header / Window Bar */}
         <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/90 px-4 py-2.5 backdrop-blur-xs select-none">
           <div className="flex items-center gap-2">
@@ -213,14 +213,14 @@ export function UrlShortenerVideoDemo() {
               <span className="size-2.5 rounded-full bg-emerald-400/80" />
             </div>
             <div className="ml-2 flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-              <Video className="size-3.5 text-indigo-600" />
+              <Video className="size-3.5 text-blue-600" />
               <span>LinkHub Product Demo</span>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 rounded-full bg-indigo-100/70 px-2 py-0.5 text-[11px] font-bold text-indigo-700">
-              <span className="size-1.5 rounded-full bg-indigo-600 animate-pulse" />
+            <div className="flex items-center gap-1 rounded-full bg-blue-50 border border-blue-100 px-2 py-0.5 text-[11px] font-bold text-blue-700">
+              <span className="size-1.5 rounded-full bg-blue-600 animate-pulse" />
               <span>Live Preview</span>
             </div>
             <button
@@ -243,7 +243,7 @@ export function UrlShortenerVideoDemo() {
         </div>
 
         {/* Video Canvas / Card Surface */}
-        <div className="relative p-6 sm:p-8 min-h-[440px] flex flex-col justify-between select-none">
+        <div className="relative p-5 sm:p-6 min-h-[410px] flex flex-col justify-between select-none">
           {/* Virtual Animated Mouse Cursor */}
           {cursorPos.visible && (
             <div
@@ -276,51 +276,51 @@ export function UrlShortenerVideoDemo() {
 
               {/* Click Ripple Effect */}
               {cursorPos.clicking && (
-                <span className="absolute -top-1 -left-1 size-6 rounded-full border-2 border-indigo-500 bg-indigo-400/30 animate-ping pointer-events-none" />
+                <span className="absolute -top-1 -left-1 size-6 rounded-full border-2 border-blue-600 bg-blue-500/30 animate-ping pointer-events-none" />
               )}
             </div>
           )}
 
           {/* URL Shortener UI Elements */}
-          <div className="space-y-5">
+          <div className="space-y-4">
             {/* Card Header */}
-            <div className="flex items-center gap-3.5">
-              <div className="flex size-11 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md shadow-indigo-300">
-                <Link2 className="size-5.5" />
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-500/20">
+                <Link2 className="size-5" />
               </div>
               <div>
-                <h3 className="font-extrabold text-slate-900 text-lg sm:text-xl tracking-tight leading-tight">
+                <h3 className="font-extrabold text-slate-900 text-base sm:text-lg tracking-tight leading-tight">
                   URL Shortener
                 </h3>
-                <p className="text-xs sm:text-sm text-slate-500">
+                <p className="text-xs text-slate-500">
                   Turn long URLs into short, branded links.
                 </p>
               </div>
             </div>
 
             {/* URL Input & Shorten Button Row */}
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2">
               <div
-                className={`relative flex-1 flex items-center h-12 rounded-2xl border bg-slate-50 px-4 text-xs sm:text-sm transition-all duration-200 ${
+                className={`relative flex-1 flex items-center h-11 rounded-2xl border px-3.5 text-xs sm:text-sm transition-all duration-200 ${
                   inputValue
-                    ? "border-indigo-500 bg-white ring-2 ring-indigo-500/10 text-slate-900 font-medium"
-                    : "border-slate-200 text-slate-400"
+                    ? "border-blue-600 bg-white ring-2 ring-blue-600/10 text-slate-900 font-medium shadow-xs"
+                    : "border-slate-200 bg-slate-50 text-slate-400"
                 }`}
               >
                 <span className="truncate">
                   {inputValue || "https://example.com/products/summer-sale"}
                 </span>
                 {inputValue.length < FULL_URL.length && inputValue.length > 0 && (
-                  <span className="ml-0.5 inline-block w-0.5 h-4 bg-indigo-600 animate-pulse" />
+                  <span className="ml-0.5 inline-block w-0.5 h-4 bg-blue-600 animate-pulse" />
                 )}
               </div>
 
               <button
                 type="button"
-                className={`h-12 px-5 sm:px-6 rounded-2xl font-bold text-xs sm:text-sm transition-all duration-200 flex items-center gap-1.5 shrink-0 select-none shadow-sm ${
+                className={`h-11 px-4 sm:px-5 rounded-2xl font-bold text-xs sm:text-sm transition-all duration-200 flex items-center gap-1.5 shrink-0 select-none shadow-sm ${
                   isShortening
-                    ? "bg-indigo-700 text-white scale-98"
-                    : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                    ? "bg-blue-700 text-white scale-98"
+                    : "bg-blue-600 hover:bg-blue-700 text-white active:scale-98"
                 }`}
               >
                 {isShortening ? (
@@ -353,8 +353,8 @@ export function UrlShortenerVideoDemo() {
                 type="button"
                 className={`h-9 px-4 rounded-xl text-xs font-bold transition-all duration-150 flex items-center gap-1.5 shrink-0 shadow-xs ${
                   isCopied
-                    ? "bg-emerald-600 text-white scale-98"
-                    : "bg-indigo-600 text-white hover:bg-indigo-700"
+                    ? "bg-emerald-600 text-white scale-98 shadow-emerald-200"
+                    : "bg-slate-900 text-white hover:bg-slate-800"
                 }`}
               >
                 {isCopied ? (
@@ -392,29 +392,29 @@ export function UrlShortenerVideoDemo() {
                   <rect x="5" y="75" width="20" height="20" rx="2" fill="#ffffff" />
                   <rect x="10" y="80" width="10" height="10" rx="1" fill="#0f172a" />
 
-                  <rect x="36" y="8" width="8" height="8" rx="1" fill="#6366f1" />
+                  <rect x="36" y="8" width="8" height="8" rx="1" fill="#2563eb" />
                   <rect x="48" y="14" width="8" height="8" rx="1" fill="#0f172a" />
                   <rect x="36" y="24" width="8" height="8" rx="1" fill="#0f172a" />
                   <rect x="14" y="38" width="8" height="8" rx="1" fill="#0f172a" />
-                  <rect x="26" y="48" width="8" height="8" rx="1" fill="#6366f1" />
-                  <rect x="38" y="38" width="14" height="14" rx="2" fill="#4f46e5" />
+                  <rect x="26" y="48" width="8" height="8" rx="1" fill="#2563eb" />
+                  <rect x="38" y="38" width="14" height="14" rx="2" fill="#1d4ed8" />
                   <rect x="56" y="42" width="8" height="8" rx="1" fill="#0f172a" />
                   <rect x="70" y="40" width="10" height="10" rx="1" fill="#0f172a" />
-                  <rect x="84" y="52" width="8" height="8" rx="1" fill="#6366f1" />
+                  <rect x="84" y="52" width="8" height="8" rx="1" fill="#2563eb" />
                   <rect x="70" y="68" width="12" height="8" rx="1" fill="#0f172a" />
                   <rect x="46" y="74" width="10" height="10" rx="1" fill="#0f172a" />
-                  <rect x="80" y="82" width="12" height="10" rx="1" fill="#4f46e5" />
+                  <rect x="80" y="82" width="12" height="10" rx="1" fill="#1d4ed8" />
                 </svg>
               </div>
 
               {/* Annotation */}
-              <div className="flex items-center gap-1.5 font-handwriting text-indigo-600 select-none">
+              <div className="flex items-center gap-1.5 font-handwriting text-blue-600 select-none">
                 <svg
                   width="36"
                   height="26"
                   viewBox="0 0 40 25"
                   fill="none"
-                  className="stroke-indigo-500"
+                  className="stroke-blue-600"
                 >
                   <path
                     d="M38 18 C 28 22, 16 16, 6 6"
@@ -475,7 +475,7 @@ export function UrlShortenerVideoDemo() {
         {/* Video Playback Progress Bar */}
         <div className="relative h-1 w-full bg-slate-100">
           <div
-            className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 transition-all duration-100 ease-linear"
+            className="h-full bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 transition-all duration-100 ease-linear"
             style={{ width: `${progress}%` }}
           />
         </div>
