@@ -24,8 +24,9 @@ import { Card } from "@/components/ui/card";
 import { PhonePreview } from "@/components/bio/PhonePreview";
 import { ThemeSelector } from "@/components/bio/ThemeSelector";
 import { AddBioLinkModal } from "@/components/bio/AddBioLinkModal";
+import { API_ENDPOINTS } from "@/lib/api";
 
-const API_BIO_ME = "http://localhost:5000/api/v1/bio/me";
+const API_BIO_ME = `${API_ENDPOINTS.bio}/me`;
 
 export function BioBuilderPage() {
   const navigate = useNavigate();

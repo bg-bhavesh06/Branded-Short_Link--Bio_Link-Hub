@@ -3,8 +3,9 @@ import { useParams, Link } from "react-router-dom";
 import { BioCardContent } from "@/components/bio/BioCardContent";
 import { Loader2, AlertCircle, Link2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { API_ENDPOINTS } from "@/lib/api";
 
-const API_PUBLIC_BIO = "http://localhost:5000/api/v1/bio";
+const API_PUBLIC_BIO = API_ENDPOINTS.bio;
 
 export function PublicBioPage() {
   const { username } = useParams();

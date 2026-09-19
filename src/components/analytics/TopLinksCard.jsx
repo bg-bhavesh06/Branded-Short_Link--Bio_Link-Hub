@@ -1,6 +1,7 @@
 import React from "react";
 import { Youtube, Github, Globe, FileText, Instagram, Copy, Check } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { PUBLIC_APP_URL } from "@/lib/api";
 
 const getLinkIcon = (url = "") => {
   const lower = url.toLowerCase();
@@ -55,7 +56,7 @@ export function TopLinksCard({ loading = false, onCopyLink, copiedLink, data = [
           <div className="divide-y divide-slate-100">
             {data.map((link, index) => {
               const { icon: Icon, iconColor, iconBg, name: defaultName } = getLinkIcon(link.originalUrl);
-              const shortUrl = `http://localhost:5173/r/${link.shortCode}`;
+              const shortUrl = `${PUBLIC_APP_URL}/r/${link.shortCode}`;
               const isCopied = copiedLink === shortUrl;
 
               return (

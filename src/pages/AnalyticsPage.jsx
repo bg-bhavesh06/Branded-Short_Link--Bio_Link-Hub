@@ -19,8 +19,9 @@ import { TopLinksCard } from "@/components/analytics/TopLinksCard";
 import { TopReferrersCard } from "@/components/analytics/TopReferrersCard";
 import { DeviceDistribution } from "@/components/analytics/DeviceDistribution";
 import { RecentActivity } from "@/components/analytics/RecentActivity";
+import { API_ENDPOINTS } from "@/lib/api";
 
-const API_BASE = "http://localhost:5000/api/v1/analytics";
+const API_BASE = API_ENDPOINTS.analytics;
 
 export function AnalyticsPage() {
   const navigate = useNavigate();
@@ -63,7 +64,7 @@ export function AnalyticsPage() {
           fetch(`${API_BASE}/top-referrers?range=${rangeQuery}`, { credentials: "include" }),
           fetch(`${API_BASE}/devices?range=${rangeQuery}`, { credentials: "include" }),
           fetch(`${API_BASE}/recent`, { credentials: "include" }),
-          fetch(`http://localhost:5000/api/v1/links`, { credentials: "include" }),
+          fetch(API_ENDPOINTS.links, { credentials: "include" }),
         ]);
 
       if (overviewRes.ok) {

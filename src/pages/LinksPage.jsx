@@ -29,8 +29,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { AnalyticsStatCard } from "@/components/analytics/AnalyticsStatCard";
+import { API_ENDPOINTS, PUBLIC_APP_URL } from "@/lib/api";
 
-const API_BASE = "http://localhost:5000/api/v1/links";
+const API_BASE = API_ENDPOINTS.links;
 
 const getLinkIcon = (url = "") => {
   const lower = url.toLowerCase();
@@ -69,7 +70,7 @@ export function LinksPage() {
   // Form states
   const [longUrl, setLongUrl] = useState("");
   const [customAlias, setCustomAlias] = useState("");
-  const [previewUrl, setPreviewUrl] = useState("http://localhost:5173/r/summer-sale");
+  const [previewUrl, setPreviewUrl] = useState(`${PUBLIC_APP_URL}/r/summer-sale`);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [toastMessage, setToastMessage] = useState("");
