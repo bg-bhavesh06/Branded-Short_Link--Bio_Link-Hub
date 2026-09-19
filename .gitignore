@@ -14,6 +14,10 @@ node_modules/
 dist/
 dist-ssr/
 
+# Raw video scratch
+Video/
+
+
 # Local env files
 .env
 .env.local
