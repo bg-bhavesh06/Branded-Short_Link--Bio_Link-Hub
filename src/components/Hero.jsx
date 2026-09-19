@@ -52,15 +52,6 @@ export function Hero() {
                 <span>{isAuthenticated ? "Go to Dashboard" : "Get Started Free"}</span>
                 <ArrowRight className="size-4.5 transition-transform group-hover:translate-x-1" />
               </Button>
-
-              <Button
-                onClick={() => navigate("/links")}
-                variant="outline"
-                size="xl"
-                className="border-slate-200 bg-white hover:bg-slate-50 text-slate-900 rounded-2xl px-6 font-semibold text-base shadow-xs"
-              >
-                View Demo
-              </Button>
             </div>
 
             {/* Value Proposition Checklist */}
