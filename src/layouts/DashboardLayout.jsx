@@ -24,7 +24,7 @@ export function DashboardLayout() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const navItems = [
-    { label: "Overview", icon: Home, path: "/links" },
+    { label: "Overview", icon: Home, path: "/" },
     { label: "Links", icon: Link2, path: "/links" },
     { label: "Analytics", icon: BarChart3, path: "/analytics" },
     { label: "Bio Builder", icon: LayoutGrid, path: "/bio-builder" },
