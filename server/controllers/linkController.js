@@ -244,10 +244,12 @@ export const redirectShortLink = async (req, res, next) => {
       });
     }
 
-    // Asynchronously record telemetry without blocking redirect response
-    recordClick(req, link._id).catch((err) =>
-      console.error("Telemetry error:", err)
-    );
+    // Asynchronously record telemetry before redirecting in serverless
+    try {
+      await recordClick(req, link._id);
+    } catch (err) {
+      console.error("Telemetry error:", err);
+    }
 
     // 302 Found redirect as required
     return res.redirect(302, link.originalUrl);
