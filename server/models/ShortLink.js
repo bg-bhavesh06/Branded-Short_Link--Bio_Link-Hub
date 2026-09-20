@@ -27,6 +27,6 @@ const shortLinkSchema = new mongoose.Schema(
 // Index for rapid user links retrieval sorted by creation time
 shortLinkSchema.index({ user: 1, createdAt: -1 });
 
-const ShortLink = mongoose.model("ShortLink", shortLinkSchema);
+const ShortLink = mongoose.models.ShortLink || mongoose.model("ShortLink", shortLinkSchema);
 
 export default ShortLink;

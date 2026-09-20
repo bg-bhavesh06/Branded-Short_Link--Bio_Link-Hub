@@ -147,6 +147,6 @@ const bioProfileSchema = new mongoose.Schema(
   }
 );
 
-const BioProfile = mongoose.model("BioProfile", bioProfileSchema);
+const BioProfile = mongoose.models.BioProfile || mongoose.model("BioProfile", bioProfileSchema);
 
 export default BioProfile;

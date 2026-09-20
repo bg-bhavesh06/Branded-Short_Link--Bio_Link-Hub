@@ -39,6 +39,6 @@ const clickSchema = new mongoose.Schema(
 // Index for telemetry and analytics aggregations over time
 clickSchema.index({ shortLink: 1, timestamp: -1 });
 
-const Click = mongoose.model("Click", clickSchema);
+const Click = mongoose.models.Click || mongoose.model("Click", clickSchema);
 
 export default Click;
