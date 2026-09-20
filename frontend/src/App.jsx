@@ -9,6 +9,7 @@ import { AnalyticsPage } from "@/pages/AnalyticsPage";
 import { FeaturesPage } from "@/pages/FeaturesPage";
 import { PricingPage } from "@/pages/PricingPage";
 import { BlogPage } from "@/pages/BlogPage";
+import { BlogPostPage } from "@/pages/BlogPostPage";
 import { AboutPage } from "@/pages/AboutPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { SignupPage } from "@/pages/SignupPage";
@@ -45,6 +46,7 @@ export default function App() {
             <Route path="/features" element={<FeaturesPage />} />
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/blog" element={<BlogPage />} />
+            <Route path="/blog/:slug" element={<BlogPostPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />

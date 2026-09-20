@@ -84,6 +84,17 @@ export const signup = async (req, res, next) => {
       socialLinks: [],
       bioLinks: [],
       theme: "Minimal Light",
+      templateId: "creator",
+      jobTitle: "",
+      company: "",
+      pronouns: "",
+      contactMethods: [],
+      customization: {
+        buttonStyle: "rounded",
+        layoutVariant: "standard",
+        backgroundStyle: "solid",
+        headerColor: "",
+      },
     });
 
     // 8. Return safe response (simulated verification token included for development/testing)

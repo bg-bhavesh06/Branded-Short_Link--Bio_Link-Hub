@@ -1,37 +1,17 @@
 {
-  "name": "linkhub",
+  "name": "linkhub-workspace",
+  "version": "1.0.0",
   "private": true,
-  "version": "0.1.0",
-  "type": "module",
+  "description": "Branded Short-Link & Bio-Link Hub Monorepo",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@base-ui/react": "^1.8.0",
-    "bcryptjs": "^3.0.3",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "cookie-parser": "^1.4.7",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "express-rate-limit": "^8.7.0",
-    "helmet": "^8.3.0",
-    "jsonwebtoken": "^9.0.3",
-    "lucide-react": "^0.475.0",
-    "mongoose": "^8.9.5",
-    "qrcode.react": "^4.2.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-router-dom": "^7.1.5",
-    "tailwind-merge": "^3.0.1"
+    "dev": "concurrently -n \"server,frontend\" -c \"cyan,magenta\" \"npm --prefix server run dev\" \"npm --prefix frontend run dev\"",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:server": "npm --prefix server run dev",
+    "build": "npm --prefix frontend run build",
+    "preview": "npm --prefix frontend run preview",
+    "install:all": "npm install && npm --prefix frontend install && npm --prefix server install"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.0.8",
-    "@vitejs/plugin-react": "^4.3.4",
-    "tailwindcss": "^4.0.8",
-    "vite": "^6.2.0"
+    "concurrently": "^9.2.4"
   }
 }

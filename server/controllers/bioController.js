@@ -20,6 +20,8 @@ const isValidHttpUrl = (urlString) => {
   }
 };
 
+const VALID_TEMPLATES = new Set(["creator", "professional", "portfolio", "minimal"]);
+
 /**
  * GET /api/v1/bio/me
  * Retrieves the authenticated user's BioProfile
@@ -47,6 +49,21 @@ export const getMyBio = async (req, res, next) => {
           socialLinks: profile.socialLinks,
           bioLinks: profile.bioLinks,
           theme: profile.theme,
+          templateId: profile.templateId || "creator",
+          jobTitle: profile.jobTitle || "",
+          company: profile.company || "",
+          pronouns: profile.pronouns || "",
+          coverImage: profile.coverImage || "",
+          resumeUrl: profile.resumeUrl || "",
+          statusBadge: profile.statusBadge || "Open to work",
+          highlights: profile.highlights || [],
+          contactMethods: profile.contactMethods || [],
+          customization: profile.customization || {
+            buttonStyle: "rounded",
+            layoutVariant: "standard",
+            backgroundStyle: "solid",
+            headerColor: "",
+          },
         },
       },
     });
@@ -61,7 +78,25 @@ export const getMyBio = async (req, res, next) => {
  */
 export const upsertMyBio = async (req, res, next) => {
   try {
-    const { username, avatar = "", displayName = "", bio = "", socialLinks = [], bioLinks = [], theme = "Minimal Light" } = req.body;
+    const {
+      username,
+      avatar = "",
+      displayName = "",
+      bio = "",
+      socialLinks = [],
+      bioLinks = [],
+      theme = "Minimal Light",
+      templateId = "creator",
+      jobTitle = "",
+      company = "",
+      pronouns = "",
+      coverImage = "",
+      resumeUrl = "",
+      statusBadge = "Open to work",
+      highlights = [],
+      contactMethods = [],
+      customization = {},
+    } = req.body;
 
     // 1. Username validation
     if (!username || typeof username !== "string") {
@@ -102,7 +137,10 @@ export const upsertMyBio = async (req, res, next) => {
       });
     }
 
-    // 3. Social Links validation
+    // 3. Template validation
+    const normalizedTemplate = VALID_TEMPLATES.has(templateId) ? templateId : "creator";
+
+    // 4. Social Links validation
     if (!Array.isArray(socialLinks)) {
       return res.status(400).json({
         success: false,
@@ -124,7 +162,7 @@ export const upsertMyBio = async (req, res, next) => {
       });
     }
 
-    // 4. Bio Links validation
+    // 5. Bio Links validation
     if (!Array.isArray(bioLinks)) {
       return res.status(400).json({
         success: false,
@@ -159,7 +197,34 @@ export const upsertMyBio = async (req, res, next) => {
       });
     }
 
-    // 5. Upsert BioProfile in MongoDB
+    // 6. Clean contact methods
+    const cleanedContactMethods = Array.isArray(contactMethods)
+      ? contactMethods.map((cm) => ({
+          type: (cm.type || "phone").trim(),
+          label: (cm.label || "").trim(),
+          value: (cm.value || "").trim(),
+        }))
+      : [];
+
+    // 7. Clean highlights
+    const cleanedHighlights = Array.isArray(highlights)
+      ? highlights.map((h) => ({
+          title: (h.title || "").trim().slice(0, 60),
+          subtitle: (h.subtitle || "").trim().slice(0, 100),
+        }))
+      : [];
+
+    // 8. Clean customization
+    const cleanedCustomization = {
+      buttonStyle: ["rounded", "soft-card", "outline"].includes(customization?.buttonStyle)
+        ? customization.buttonStyle
+        : "rounded",
+      layoutVariant: typeof customization?.layoutVariant === "string" ? customization.layoutVariant : "standard",
+      backgroundStyle: typeof customization?.backgroundStyle === "string" ? customization.backgroundStyle : "solid",
+      headerColor: typeof customization?.headerColor === "string" ? customization.headerColor : "",
+    };
+
+    // 9. Upsert BioProfile in MongoDB
     const profile = await BioProfile.findOneAndUpdate(
       { user: req.user.userId },
       {
@@ -170,6 +235,16 @@ export const upsertMyBio = async (req, res, next) => {
         socialLinks: cleanedSocialLinks,
         bioLinks: cleanedBioLinks,
         theme: normalizedTheme,
+        templateId: normalizedTemplate,
+        jobTitle: (jobTitle || "").trim().slice(0, 60),
+        company: (company || "").trim().slice(0, 60),
+        pronouns: (pronouns || "").trim().slice(0, 30),
+        coverImage: (coverImage || "").trim(),
+        resumeUrl: (resumeUrl || "").trim(),
+        statusBadge: (statusBadge || "Open to work").trim().slice(0, 30),
+        highlights: cleanedHighlights,
+        contactMethods: cleanedContactMethods,
+        customization: cleanedCustomization,
       },
       { new: true, upsert: true, runValidators: true }
     );
@@ -187,6 +262,16 @@ export const upsertMyBio = async (req, res, next) => {
           socialLinks: profile.socialLinks,
           bioLinks: profile.bioLinks,
           theme: profile.theme,
+          templateId: profile.templateId,
+          jobTitle: profile.jobTitle,
+          company: profile.company,
+          pronouns: profile.pronouns,
+          coverImage: profile.coverImage,
+          resumeUrl: profile.resumeUrl,
+          statusBadge: profile.statusBadge,
+          highlights: profile.highlights,
+          contactMethods: profile.contactMethods,
+          customization: profile.customization,
         },
       },
     });
@@ -236,6 +321,21 @@ export const getPublicBio = async (req, res, next) => {
         socialLinks: profile.socialLinks,
         bioLinks: profile.bioLinks,
         theme: profile.theme,
+        templateId: profile.templateId || "creator",
+        jobTitle: profile.jobTitle || "",
+        company: profile.company || "",
+        pronouns: profile.pronouns || "",
+        coverImage: profile.coverImage || "",
+        resumeUrl: profile.resumeUrl || "",
+        statusBadge: profile.statusBadge || "Open to work",
+        highlights: profile.highlights || [],
+        contactMethods: profile.contactMethods || [],
+        customization: profile.customization || {
+          buttonStyle: "rounded",
+          layoutVariant: "standard",
+          backgroundStyle: "solid",
+          headerColor: "",
+        },
       },
     });
   } catch (error) {

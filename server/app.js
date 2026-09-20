@@ -37,9 +37,9 @@ app.use(
   })
 );
 
-// 2. Request parsing middlewares
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// 2. Request parsing middlewares (10mb limit for base64 avatar images)
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
 app.use(cookieParser());
 
 // 3. Public Redirect Endpoint (Direct 302 Found with rate limiting and async telemetry)

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { BioCardContent } from "@/components/bio/BioCardContent";
-import { Loader2, AlertCircle, Link2, ArrowLeft } from "lucide-react";
+import { Loader2, AlertCircle, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { API_ENDPOINTS } from "@/lib/api";
 
@@ -16,6 +16,16 @@ export function PublicBioPage() {
   const [socialLinks, setSocialLinks] = useState([]);
   const [bioLinks, setBioLinks] = useState([]);
   const [theme, setTheme] = useState("minimal");
+  const [templateId, setTemplateId] = useState("creator");
+  const [jobTitle, setJobTitle] = useState("");
+  const [company, setCompany] = useState("");
+  const [pronouns, setPronouns] = useState("");
+  const [coverImage, setCoverImage] = useState("");
+  const [resumeUrl, setResumeUrl] = useState("");
+  const [statusBadge, setStatusBadge] = useState("Open to work");
+  const [highlights, setHighlights] = useState([]);
+  const [contactMethods, setContactMethods] = useState([]);
+  const [customization, setCustomization] = useState({});
 
   useEffect(() => {
     const fetchPublicBio = async () => {
@@ -45,8 +55,18 @@ export function PublicBioPage() {
         });
         setSocialLinks(d.socialLinks || []);
         setBioLinks(d.bioLinks || []);
+        setTemplateId(d.templateId || "creator");
+        setJobTitle(d.jobTitle || "");
+        setCompany(d.company || "");
+        setPronouns(d.pronouns || "");
+        setCoverImage(d.coverImage || "");
+        setResumeUrl(d.resumeUrl || "");
+        setStatusBadge(d.statusBadge || "Open to work");
+        setHighlights(d.highlights || []);
+        setContactMethods(d.contactMethods || []);
+        setCustomization(d.customization || {});
 
-        // Normalize theme to frontend CSS key
+        // Normalize theme to frontend key
         if (d.theme === "Dark Slate" || d.theme === "dark") {
           setTheme("dark");
         } else if (d.theme === "Gradient" || d.theme === "gradient") {
@@ -112,6 +132,16 @@ export function PublicBioPage() {
           socialLinks={socialLinks}
           bioLinks={bioLinks}
           theme={theme}
+          templateId={templateId}
+          jobTitle={jobTitle}
+          company={company}
+          pronouns={pronouns}
+          coverImage={coverImage}
+          resumeUrl={resumeUrl}
+          statusBadge={statusBadge}
+          highlights={highlights}
+          contactMethods={contactMethods}
+          customization={customization}
           isPublic={true}
         />
       </div>

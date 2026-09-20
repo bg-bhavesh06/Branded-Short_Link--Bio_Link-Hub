@@ -92,7 +92,6 @@ Express API Gateway (`/api/v1`)                                               Pu
        │
        ├─ Route Controllers
        │    ├─ `authController` (Signup, Login, Refresh, Logout, Password Reset)
-       │    ├─ `linkController` (ShortLink CRUD, Vanity Slugs, Search, Pagination)
        │    ├─ `analyticsController` (7d/30d/90d Aggregations, Referrers, Devices)
        │    └─ `bioController` (BioProfile CRUD, Public Bio Presentation)
        │
@@ -106,48 +105,46 @@ MongoDB Database (Mongoose Schemas: User, ShortLink, Click, BioProfile, RefreshT
 
 ```text
 LINKHUB/
-├── public/                     # Static brand assets & sample avatars
-├── src/                        # React Frontend Source
-│   ├── components/             # Reusable UI & Feature Components
-│   │   ├── analytics/          # Analytics charts, device stats, referrer cards
-│   │   ├── bio/                # Bio builder preview, theme selector, modals
-│   │   ├── settings/           # Profile, security, and appearance settings
-│   │   ├── ui/                 # Coss UI primitives (@base-ui/react)
-│   │   └── ProtectedRoute.jsx  # Client-side auth route guard
-│   ├── context/                # AuthContext & global state provider
-│   ├── layouts/                # DashboardLayout & MainLayout
-│   ├── pages/                  # Route view components
-│   │   ├── LandingPage.jsx     # Branded landing page & previews
-│   │   ├── LinksPage.jsx       # Link Library & Shortener dashboard
-│   │   ├── AnalyticsPage.jsx   # Telemetry & metrics dashboard
-│   │   ├── BioBuilderPage.jsx  # Link-in-Bio editor & live phone preview
-│   │   ├── PublicBioPage.jsx   # Standalone public /bio/:username view
-│   │   ├── SettingsPage.jsx    # User profile & account security
-│   │   ├── LoginPage.jsx       # User login view
-│   │   ├── SignupPage.jsx      # User registration view
-│   │   ├── ForgotPasswordPage.jsx # Password reset request view
-│   │   └── ResetPasswordPage.jsx  # Password reset submission view
-│   ├── lib/                    # Utility helpers (`cn`)
-│   ├── App.jsx                 # App routes and providers
-│   ├── main.jsx                # React DOM root entry point
-│   └── index.css               # Tailwind CSS v4 styling & tokens
+├── frontend/                     # All React 19 / Vite 6 client source
+│   ├── public/                   # Static brand assets & sample avatars
+│   ├── src/                      # React application source code
+│   │   ├── components/           # Reusable UI & feature components
+│   │   │   ├── analytics/        # Analytics charts, device stats, referrer cards
+│   │   │   ├── bio/              # Bio builder preview, theme selector, modals
+│   │   │   ├── settings/         # Profile, security, and appearance settings
+│   │   │   ├── ui/               # Coss UI primitives (@base-ui/react)
+│   │   │   └── ProtectedRoute.jsx# Client-side auth route guard
+│   │   ├── context/              # AuthContext & global session provider
+│   │   ├── layouts/              # DashboardLayout & MainLayout
+│   │   ├── lib/                  # Axios API instance & endpoints
+│   │   ├── pages/                # Route view components
+│   │   ├── App.jsx               # React Router tree
+│   │   ├── main.jsx              # React DOM root entry point
+│   │   └── index.css             # Tailwind CSS v4 styling & tokens
+│   ├── index.html                # Vite HTML entry
+│   ├── vite.config.js            # Vite bundler configuration
+│   └── package.json              # Frontend dependencies
 │
-├── server/                     # Express Backend Source
-│   ├── config/                 # MongoDB database connection (`db.js`)
-│   ├── controllers/            # Request handlers (auth, link, analytics, bio)
-│   ├── middleware/             # Auth guard, rate limiters, central error handler
-│   ├── models/                 # Mongoose models (User, ShortLink, Click, BioProfile, RefreshToken)
-│   ├── routes/                 # Express API routes (auth, link, analytics, bio, health)
-│   ├── services/               # Background services (clickService telemetry)
-│   ├── utils/                  # Token utilities, Base62 generator, slug validators
-│   ├── .env.example            # Backend environment variables template
-│   ├── app.js                  # Express app initialization & middleware stack
-│   └── server.js               # HTTP server listener
+├── server/                       # All Node.js / Express backend source
+│   ├── config/                   # MongoDB database connection (`db.js`)
+│   ├── controllers/              # Request handlers (auth, link, analytics, bio)
+│   ├── middleware/               # Auth guard, rate limiters, central error handler
+│   ├── models/                   # Mongoose models (User, ShortLink, Click, BioProfile, RefreshToken)
+│   ├── routes/                   # Express API routes (auth, link, analytics, bio, health)
+│   ├── services/                 # Background services (clickService telemetry)
+│   ├── utils/                    # Token utilities, Base62 generator, slug validators
+│   ├── app.js                    # Express app initialization & middleware stack
+│   ├── server.js                 # HTTP server listener (port 5000)
+│   ├── package.json              # Server dependencies
+│   └── .env.example              # Server environment variables template
 │
-├── .env.example                # Frontend environment template
-├── .gitignore                  # Git ignore rules (protects all .env files)
-├── package.json                # Frontend package dependencies
-└── README.md                   # Project documentation
+├── api/                          # Vercel serverless function entrypoint
+│   └── index.js                  # Handler delegating to server/app.js & db.js
+│
+├── vercel.json                   # Vercel multi-target deployment configuration
+├── package.json                  # Root monorepo scripts (dev, build, install:all)
+├── .gitignore                    # Monorepo gitignore rules
+└── README.md                     # Project documentation
 ```
 
 ---

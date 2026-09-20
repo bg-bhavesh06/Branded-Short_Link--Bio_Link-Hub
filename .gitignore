@@ -9,13 +9,15 @@ lerna-debug.log*
 
 # Dependencies
 node_modules/
+frontend/node_modules/
 server/node_modules/
 
 # Production build outputs
 dist/
 dist-ssr/
+frontend/dist/
 
-# Raw video scratch
+# Raw media / test assets
 Video/
 video/
 exampleImages/
@@ -24,6 +26,8 @@ exampleImages/
 .env
 .env.local
 .env.*.local
+frontend/.env
+frontend/.env.local
 server/.env
 server/.env.local
 
