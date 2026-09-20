@@ -1,6 +1,10 @@
+import dns from "dns";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
+
+// Configure DNS servers for MongoDB Atlas SRV resolution
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, ".env") });
