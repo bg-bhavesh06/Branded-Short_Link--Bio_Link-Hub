@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "description": "Branded Short-Link & Bio-Link Hub Monorepo",
+  "workspaces": [
+    "frontend",
+    "server"
+  ],
   "scripts": {
     "dev": "concurrently -n \"server,frontend\" -c \"cyan,magenta\" \"npm --prefix server run dev\" \"npm --prefix frontend run dev\"",
     "dev:frontend": "npm --prefix frontend run dev",
