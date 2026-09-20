@@ -57,6 +57,7 @@ export const getMyBio = async (req, res, next) => {
           resumeUrl: profile.resumeUrl || "",
           statusBadge: profile.statusBadge || "Open to work",
           highlights: profile.highlights || [],
+          projectLinks: profile.projectLinks || [],
           contactMethods: profile.contactMethods || [],
           customization: profile.customization || {
             buttonStyle: "rounded",
@@ -94,6 +95,7 @@ export const upsertMyBio = async (req, res, next) => {
       resumeUrl = "",
       statusBadge = "Open to work",
       highlights = [],
+      projectLinks = [],
       contactMethods = [],
       customization = {},
     } = req.body;
@@ -214,6 +216,15 @@ export const upsertMyBio = async (req, res, next) => {
         }))
       : [];
 
+    // 7.1 Clean project links
+    const cleanedProjectLinks = Array.isArray(projectLinks)
+      ? projectLinks.map((p) => ({
+          title: (p.title || "").trim().slice(0, 80),
+          subtitle: (p.subtitle || "").trim().slice(0, 120),
+          url: (p.url || "").trim(),
+        }))
+      : [];
+
     // 8. Clean customization
     const cleanedCustomization = {
       buttonStyle: ["rounded", "soft-card", "outline"].includes(customization?.buttonStyle)
@@ -243,8 +254,10 @@ export const upsertMyBio = async (req, res, next) => {
         resumeUrl: (resumeUrl || "").trim(),
         statusBadge: (statusBadge || "Open to work").trim().slice(0, 30),
         highlights: cleanedHighlights,
+        projectLinks: cleanedProjectLinks,
         contactMethods: cleanedContactMethods,
         customization: cleanedCustomization,
+        isPublished: true,
       },
       { new: true, upsert: true, runValidators: true }
     );
@@ -303,7 +316,7 @@ export const getPublicBio = async (req, res, next) => {
     const normalized = username.trim().toLowerCase();
     const profile = await BioProfile.findOne({ username: normalized });
 
-    if (!profile) {
+    if (!profile || profile.isPublished === false) {
       return res.status(404).json({
         success: false,
         message: "Bio profile not found",
@@ -329,6 +342,7 @@ export const getPublicBio = async (req, res, next) => {
         resumeUrl: profile.resumeUrl || "",
         statusBadge: profile.statusBadge || "Open to work",
         highlights: profile.highlights || [],
+        projectLinks: profile.projectLinks || [],
         contactMethods: profile.contactMethods || [],
         customization: profile.customization || {
           buttonStyle: "rounded",
@@ -342,3 +356,20 @@ export const getPublicBio = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * DELETE /api/v1/bio/me
+ * Deletes the authenticated user's BioProfile
+ */
+export const deleteMyBio = async (req, res, next) => {
+  try {
+    await BioProfile.findOneAndDelete({ user: req.user.userId });
+    return res.status(200).json({
+      success: true,
+      message: "Bio profile deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

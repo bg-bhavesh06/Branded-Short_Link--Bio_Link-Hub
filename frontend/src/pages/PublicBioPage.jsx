@@ -24,6 +24,7 @@ export function PublicBioPage() {
   const [resumeUrl, setResumeUrl] = useState("");
   const [statusBadge, setStatusBadge] = useState("Open to work");
   const [highlights, setHighlights] = useState([]);
+  const [projectLinks, setProjectLinks] = useState([]);
   const [contactMethods, setContactMethods] = useState([]);
   const [customization, setCustomization] = useState({});
 
@@ -63,6 +64,7 @@ export function PublicBioPage() {
         setResumeUrl(d.resumeUrl || "");
         setStatusBadge(d.statusBadge || "Open to work");
         setHighlights(d.highlights || []);
+        setProjectLinks(d.projectLinks || []);
         setContactMethods(d.contactMethods || []);
         setCustomization(d.customization || {});
 
@@ -140,6 +142,7 @@ export function PublicBioPage() {
           resumeUrl={resumeUrl}
           statusBadge={statusBadge}
           highlights={highlights}
+          projectLinks={projectLinks}
           contactMethods={contactMethods}
           customization={customization}
           isPublic={true}

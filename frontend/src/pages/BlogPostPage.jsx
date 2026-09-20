@@ -16,8 +16,10 @@ import {
 } from "lucide-react";
 import { BLOG_POSTS } from "@/lib/blogData";
 import { BlogCard } from "@/components/BlogCard";
+import { useAuth } from "@/context/AuthContext";
 
 export function BlogPostPage() {
+  const { isAuthenticated } = useAuth();
   const { slug } = useParams();
   const [copied, setCopied] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -358,10 +360,10 @@ export function BlogPostPage() {
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
-                to="/signup"
+                to={isAuthenticated ? "/links" : "/signup"}
                 className="inline-flex items-center gap-2 rounded-lg bg-[#008080] hover:bg-[#006e6e] px-5 py-2.5 text-sm font-semibold text-white shadow transition-colors active:scale-95"
               >
-                Get Started for Free
+                {isAuthenticated ? "Go to Dashboard" : "Get Started for Free"}
                 <ArrowRight className="size-4" />
               </Link>
               <Link

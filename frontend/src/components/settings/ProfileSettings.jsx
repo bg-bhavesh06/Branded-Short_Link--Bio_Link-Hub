@@ -1,48 +1,57 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Check, Save, Sparkles, CheckCircle2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AvatarSettings } from "./AvatarSettings";
+import { useAuth } from "@/context/AuthContext";
 
 export function ProfileSettings() {
-  const [profile, setProfile] = useState(() => {
-    try {
-      const saved = localStorage.getItem("linkhub_user_profile");
-      if (saved) return JSON.parse(saved);
-    } catch {
-      // fallback
-    }
-    return {
-      fullName: "Bhavesh Ganwani",
-      email: "bhaveshganwani37@gmail.com",
-      username: "bhavesh",
-      avatar: "",
-    };
+  const { user, updateUser } = useAuth();
+  const [profile, setProfile] = useState({
+    fullName: user?.name || user?.fullName || "Alex Morgan",
+    email: user?.email || "alex@example.com",
+    username: user?.username || "alexmorgan",
+    avatar: user?.avatar || "",
   });
 
-  const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | saved
+  useEffect(() => {
+    if (user) {
+      setProfile((prev) => ({
+        fullName: user.name || user.fullName || prev.fullName,
+        email: user.email || prev.email,
+        username: user.username || prev.username,
+        avatar: user.avatar !== undefined ? user.avatar : prev.avatar,
+      }));
+    }
+  }, [user]);
+
+  const [saveStatus, setSaveStatus] = useState("idle");
 
   const handleSave = (e) => {
     e.preventDefault();
     setSaveStatus("saving");
-    setTimeout(() => {
-      localStorage.setItem("linkhub_user_profile", JSON.stringify(profile));
-      // Also sync with bio profile name/username if needed
-      try {
-        const bioSaved = localStorage.getItem("linkhub_bio_profile");
-        if (bioSaved) {
-          const bioObj = JSON.parse(bioSaved);
-          bioObj.displayName = profile.fullName;
-          bioObj.username = profile.username;
-          if (profile.avatar) bioObj.avatar = profile.avatar;
-          localStorage.setItem("linkhub_bio_profile", JSON.stringify(bioObj));
-        }
-      } catch {
-        // ignore
+    const updated = {
+      name: profile.fullName,
+      fullName: profile.fullName,
+      email: profile.email,
+      username: profile.username,
+      avatar: profile.avatar,
+    };
+    updateUser(updated);
+    try {
+      const bioSaved = localStorage.getItem("linkhub_bio_profile");
+      if (bioSaved) {
+        const bioObj = JSON.parse(bioSaved);
+        bioObj.displayName = profile.fullName;
+        bioObj.username = profile.username;
+        if (profile.avatar) bioObj.avatar = profile.avatar;
+        localStorage.setItem("linkhub_bio_profile", JSON.stringify(bioObj));
       }
+    } catch {}
+    setTimeout(() => {
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus("idle"), 2500);
-    }, 600);
+    }, 400);
   };
 
   return (
@@ -88,7 +97,7 @@ export function ProfileSettings() {
               onChange={(e) =>
                 setProfile((prev) => ({ ...prev, fullName: e.target.value }))
               }
-              placeholder="Bhavesh Ganwani"
+              placeholder="Alex Morgan"
               className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-colors"
             />
           </div>
@@ -115,7 +124,7 @@ export function ProfileSettings() {
               onChange={(e) =>
                 setProfile((prev) => ({ ...prev, email: e.target.value }))
               }
-              placeholder="bhaveshganwani37@gmail.com"
+              placeholder="alex@example.com"
               className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-colors"
             />
             <p className="text-[11px] text-slate-400">
@@ -146,7 +155,7 @@ export function ProfileSettings() {
                     username: e.target.value.toLowerCase().replace(/\s+/g, ""),
                   }))
                 }
-                placeholder="bhavesh"
+                placeholder="alexmorgan"
                 className="w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-8 pr-32 py-2.5 text-xs sm:text-sm text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-colors"
               />
               <span className="absolute right-3.5 text-xs text-slate-400 font-mono select-none hidden sm:block">

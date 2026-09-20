@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Link2, ArrowLeft, Mail, CheckCircle2, AlertCircle } from "lucide-react";
+import { Link2, ArrowLeft, Mail, CheckCircle2, AlertCircle, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,13 @@ export function ForgotPasswordPage() {
   const [submitted, setSubmitted] = useState(false);
   const [simulatedToken, setSimulatedToken] = useState("");
   const [error, setError] = useState("");
+
+  // 6-second auto dismiss for error
+  useEffect(() => {
+    if (!error) return;
+    const timer = setTimeout(() => setError(""), 6000);
+    return () => clearTimeout(timer);
+  }, [error]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -55,9 +62,19 @@ export function ForgotPasswordPage() {
 
         <Card className="rounded-3xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-900/5">
           {error && (
-            <div className="mb-4 flex items-center gap-2 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700">
-              <AlertCircle className="size-4 shrink-0 text-rose-600" />
-              <span>{error}</span>
+            <div className="mb-4 flex items-center justify-between gap-2 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700 animate-in fade-in duration-150">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="size-4 shrink-0 text-rose-600" />
+                <span>{error}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setError("")}
+                className="p-1 rounded-md text-rose-400 hover:text-rose-700 hover:bg-rose-100 transition-colors cursor-pointer"
+                title="Dismiss"
+              >
+                <X className="size-3.5" />
+              </button>
             </div>
           )}
 

@@ -19,9 +19,13 @@ export function AuthProvider({ children }) {
         credentials: "include",
       });
 
+      const getSaved = () => {
+        try { return JSON.parse(localStorage.getItem("linkhub_user_profile") || "{}"); } catch { return {}; }
+      };
+
       if (meRes.ok) {
         const data = await meRes.json();
-        setUser(data.user);
+        setUser({ ...data.user, ...getSaved() });
         return;
       }
 
@@ -34,7 +38,7 @@ export function AuthProvider({ children }) {
 
         if (refreshRes.ok) {
           const refreshData = await refreshRes.json();
-          setUser(refreshData.user);
+          setUser({ ...refreshData.user, ...getSaved() });
           return;
         }
       }
@@ -98,6 +102,10 @@ export function AuthProvider({ children }) {
           success: false,
           message: data.message || "Failed to create account.",
         };
+      }
+
+      if (data.user) {
+        setUser(data.user);
       }
 
       return {
@@ -209,8 +217,19 @@ export function AuthProvider({ children }) {
     } catch {
       // ignore network failure on logout
     } finally {
+      localStorage.removeItem("linkhub_user_profile");
       setUser(null);
     }
+  };
+
+  const updateUser = (data) => {
+    setUser((prev) => {
+      const updated = { ...(prev || {}), ...data };
+      try {
+        localStorage.setItem("linkhub_user_profile", JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
   };
 
   const value = {
@@ -223,6 +242,7 @@ export function AuthProvider({ children }) {
     forgotPassword,
     resetPassword,
     logout,
+    updateUser,
     checkSession,
   };
 

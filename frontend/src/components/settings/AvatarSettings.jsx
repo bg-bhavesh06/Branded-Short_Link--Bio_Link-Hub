@@ -7,10 +7,25 @@ export function AvatarSettings({ avatar, onAvatarChange, onAvatarRemove }) {
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      onAvatarChange(url);
-    }
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let { width: w, height: h } = img;
+        if (w > 400 || h > 400) {
+          if (w > h) { h = Math.round((h * 400) / w); w = 400; }
+          else { w = Math.round((w * 400) / h); h = 400; }
+        }
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext("2d")?.drawImage(img, 0, 0, w, h);
+        onAvatarChange(canvas.toDataURL("image/jpeg", 0.85));
+      };
+      img.src = ev.target?.result;
+    };
+    reader.readAsDataURL(file);
   };
 
   return (

@@ -97,10 +97,26 @@ export const signup = async (req, res, next) => {
       },
     });
 
-    // 8. Return safe response (simulated verification token included for development/testing)
+    // 8. Generate JWT Access & Refresh Tokens for automatic login
+    const tokenPayload = { userId: user._id, email: user.email, username: user.username };
+    const accessToken = generateAccessToken(tokenPayload);
+    const refreshToken = generateRefreshToken(tokenPayload);
+
+    // 9. Save refresh token to DB
+    const refreshTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await RefreshToken.create({
+      user: user._id,
+      tokenHash: hashToken(refreshToken),
+      expiresAt: refreshTokenExpiresAt,
+    });
+
+    // 10. Set HTTP-Only cookies
+    setAuthCookies(res, accessToken, refreshToken);
+
+    // 11. Return safe response with authenticated user
     return res.status(201).json({
       success: true,
-      message: "User registered successfully. Please verify your email.",
+      message: "User registered and logged in successfully.",
       user: {
         id: user._id,
         name: user.name,

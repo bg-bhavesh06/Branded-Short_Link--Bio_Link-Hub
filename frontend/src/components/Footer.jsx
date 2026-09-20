@@ -104,13 +104,28 @@ export function Footer() {
         <div className="mt-12 pt-8 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
           <p>© 2026 LinkHub. All rights reserved.</p>
           <div className="flex items-center gap-6">
-            <Link to="/about" className="hover:text-slate-800 transition-colors">
+            <Link
+              to="/privacy"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-slate-800 transition-colors"
+            >
               Privacy
             </Link>
-            <Link to="/about" className="hover:text-slate-800 transition-colors">
+            <Link
+              to="/terms"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-slate-800 transition-colors"
+            >
               Terms
             </Link>
-            <Link to="/about" className="hover:text-slate-800 transition-colors">
+            <Link
+              to="/security"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-slate-800 transition-colors"
+            >
               Security
             </Link>
           </div>

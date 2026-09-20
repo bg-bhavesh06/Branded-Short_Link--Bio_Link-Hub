@@ -131,7 +131,7 @@ export const BLOG_POSTS = [
       {
         heading: "Actionable Insights From Click Data",
         paragraphs: [
-          "By deploying unique short links with UTM tags on each network (Instagram, TikTok, LinkedIn, YouTube), you can pinpoint your highest performing channels instantly without guessing.",
+          "By deploying unique short links with UTM tags on each network (Instagram, WhatsApp, LinkedIn, YouTube), you can pinpoint your highest performing channels instantly without guessing.",
         ],
       },
     ],

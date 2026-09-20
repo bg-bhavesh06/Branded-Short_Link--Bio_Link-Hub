@@ -1,9 +1,5 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-
-// this help to change the dns service for MongoDB Atls...
-const dns = require("dns");
-const mongoose = require("mongoose");
+import dns from "dns";
+import mongoose from "mongoose";
 
 // Only override DNS servers in local development if needed, NEVER in cloud/Vercel
 if (!process.env.VERCEL && process.env.NODE_ENV !== "production") {

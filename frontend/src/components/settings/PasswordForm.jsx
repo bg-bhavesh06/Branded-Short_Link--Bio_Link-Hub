@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Lock, Eye, EyeOff, Check, AlertCircle, KeyRound } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Lock, Eye, EyeOff, Check, AlertCircle, KeyRound, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function PasswordForm() {
@@ -13,6 +13,23 @@ export function PasswordForm() {
 
   const [status, setStatus] = useState("idle"); // idle | changing | success | error
   const [errorMessage, setErrorMessage] = useState("");
+
+  // 6-second auto dismiss for error
+  useEffect(() => {
+    if (!errorMessage) return;
+    const timer = setTimeout(() => {
+      setErrorMessage("");
+      if (status === "error") setStatus("idle");
+    }, 6000);
+    return () => clearTimeout(timer);
+  }, [errorMessage, status]);
+
+  // 6-second auto dismiss for success
+  useEffect(() => {
+    if (status !== "success") return;
+    const timer = setTimeout(() => setStatus("idle"), 6000);
+    return () => clearTimeout(timer);
+  }, [status]);
 
   // Calculate simple password strength
   const getStrength = (pwd) => {
@@ -60,7 +77,6 @@ export function PasswordForm() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      setTimeout(() => setStatus("idle"), 3000);
     }, 800);
   };
 
@@ -68,9 +84,22 @@ export function PasswordForm() {
     <form onSubmit={handleSubmit} className="space-y-4 max-w-xl">
       {/* Error alert */}
       {status === "error" && errorMessage && (
-        <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700 animate-in fade-in duration-150">
-          <AlertCircle className="size-4 shrink-0 text-rose-600" />
-          <span>{errorMessage}</span>
+        <div className="flex items-center justify-between gap-2 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700 animate-in fade-in duration-150">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="size-4 shrink-0 text-rose-600" />
+            <span>{errorMessage}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setErrorMessage("");
+              setStatus("idle");
+            }}
+            className="p-1 rounded-md text-rose-400 hover:text-rose-700 hover:bg-rose-100 transition-colors cursor-pointer"
+            title="Dismiss"
+          >
+            <X className="size-3.5" />
+          </button>
         </div>
       )}
 

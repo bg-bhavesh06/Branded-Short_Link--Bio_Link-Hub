@@ -10,6 +10,8 @@ import {
   ArrowRight,
   RefreshCw,
   SlidersHorizontal,
+  X,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -48,6 +50,13 @@ export function AnalyticsPage() {
   const [devicesData, setDevicesData] = useState([]);
   const [recentData, setRecentData] = useState([]);
   const [copiedToast, setCopiedToast] = useState("");
+
+  // 6-second auto-dismiss for toast
+  useEffect(() => {
+    if (!copiedToast) return;
+    const timer = setTimeout(() => setCopiedToast(""), 6000);
+    return () => clearTimeout(timer);
+  }, [copiedToast]);
 
   const rangeQuery = timeRange.toLowerCase(); // '7d', '30d', '90d'
 
@@ -344,13 +353,21 @@ export function AnalyticsPage() {
       {/* Toast Notification when link copied */}
       {copiedToast && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-white p-4 shadow-xl shadow-emerald-500/10 animate-in slide-in-from-bottom-5">
-          <div className="flex size-7 items-center justify-center rounded-full bg-emerald-500 text-white font-bold text-xs">
-            ✓
+          <div className="flex size-7 items-center justify-center rounded-full bg-emerald-500 text-white font-bold text-xs shrink-0">
+            <Check className="size-4 stroke-[3]" />
           </div>
-          <div className="text-xs">
+          <div className="text-xs min-w-0 pr-2">
             <div className="font-bold text-slate-900">Link copied!</div>
             <div className="text-slate-500 font-mono truncate max-w-xs">{copiedToast}</div>
           </div>
+          <button
+            type="button"
+            onClick={() => setCopiedToast("")}
+            className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer shrink-0 ml-1"
+            title="Dismiss"
+          >
+            <X className="size-3.5" />
+          </button>
         </div>
       )}
     </div>

@@ -30,6 +30,10 @@ const bioProfileSchema = new mongoose.Schema(
       default: "",
       trim: true,
     },
+    isPublished: {
+      type: Boolean,
+      default: true,
+    },
     socialLinks: [
       {
         platform: {
@@ -104,6 +108,13 @@ const bioProfileSchema = new mongoose.Schema(
       {
         title: { type: String, trim: true },
         subtitle: { type: String, trim: true },
+      },
+    ],
+    projectLinks: [
+      {
+        title: { type: String, trim: true },
+        subtitle: { type: String, trim: true },
+        url: { type: String, trim: true },
       },
     ],
     contactMethods: [

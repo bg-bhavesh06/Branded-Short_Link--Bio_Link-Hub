@@ -134,10 +134,10 @@ export function DashboardLayout() {
           )}
           <div className="flex flex-col min-w-0 flex-1">
             <span className="text-xs font-semibold text-slate-900 truncate">
-              {user?.name || "Bhavesh Ganwani"}
+              {user?.name || "User Account"}
             </span>
             <span className="text-[11px] text-slate-400 truncate">
-              {user?.email || "bhaveshganwani37@gmail.com"}
+              {user?.email || "user@example.com"}
             </span>
           </div>
         </div>
@@ -190,34 +190,31 @@ export function DashboardLayout() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col lg:pl-64 min-w-0">
         {/* Sticky Top Header */}
-        <header className="sticky top-0 z-20 h-16 border-b border-slate-200/80 bg-white/90 backdrop-blur-md px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
-          {/* Left: Mobile Toggle & Global Search */}
-          <div className="flex items-center gap-3 flex-1 max-w-xl">
-            <button
-              type="button"
-              onClick={() => setMobileOpen(true)}
-              className="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 border border-slate-200"
-              aria-label="Open sidebar"
-            >
-              <Menu className="size-5" />
-            </button>
+        <header className="sticky top-0 z-20 h-16 border-b border-slate-200/80 bg-white/90 backdrop-blur-md px-4 sm:px-6 lg:px-8 flex items-center gap-4">
+          {/* Mobile Toggle */}
+          <button
+            type="button"
+            onClick={() => setMobileOpen(true)}
+            className="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 border border-slate-200 shrink-0"
+            aria-label="Open sidebar"
+          >
+            <Menu className="size-5" />
+          </button>
 
-            {/* Search Input with Ctrl K */}
-            <div className="relative w-full max-w-md hidden sm:block">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search links, analytics, or settings..."
-                className="w-full rounded-xl border border-slate-200/90 bg-slate-50/70 pl-9 pr-14 py-2 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all"
-              />
-              <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-0.5 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 select-none shadow-2xs">
-                Ctrl K
-              </div>
+          {/* Search Input with Ctrl K */}
+          <div className="relative w-full max-w-lg hidden sm:block">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search links, analytics, or settings..."
+              className="w-full rounded-xl border border-slate-200/90 bg-slate-50/70 pl-9 pr-14 py-2 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all shadow-2xs"
+            />
+            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-0.5 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 select-none shadow-2xs">
+              Ctrl K
             </div>
           </div>
-
         </header>
 
         {/* Page Content */}

@@ -15,6 +15,7 @@ export function PhonePreview({
   resumeUrl = "",
   statusBadge = "",
   highlights = [],
+  projectLinks = [],
   contactMethods = [],
   customization = {},
 }) {
@@ -111,6 +112,7 @@ export function PhonePreview({
                   resumeUrl={resumeUrl}
                   statusBadge={statusBadge}
                   highlights={highlights}
+                  projectLinks={projectLinks}
                   contactMethods={contactMethods}
                   customization={customization}
                 />
@@ -147,6 +149,7 @@ export function PhonePreview({
                 resumeUrl={resumeUrl}
                 statusBadge={statusBadge}
                 highlights={highlights}
+                projectLinks={projectLinks}
                 contactMethods={contactMethods}
                 customization={customization}
               />

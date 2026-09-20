@@ -3,12 +3,14 @@ import { Link } from "react-router-dom";
 import { Check, ArrowLeft } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/context/AuthContext";
 
 export function PricingPage() {
+  const { isAuthenticated } = useAuth();
   const plans = [
     {
       name: "Starter",
-      price: "$0",
+      price: "₹0",
       period: "forever",
       description: "Everything a creator needs to get started.",
       features: [
@@ -24,7 +26,7 @@ export function PricingPage() {
     },
     {
       name: "Creator Pro",
-      price: "$9",
+      price: "₹126",
       period: "per month",
       description: "Advanced analytics, custom vanity slugs & branded themes.",
       features: [
@@ -102,14 +104,18 @@ export function PricingPage() {
             </div>
 
             <CardFooter className="p-0 mt-8">
-              <Link to="/signup" className="w-full">
+              <Link to={isAuthenticated ? "/links" : "/signup"} className="w-full">
                 <Button
                   variant={plan.variant}
                   className={`w-full rounded-xl py-2.5 font-semibold text-sm ${
                     plan.popular ? "bg-blue-600 hover:bg-blue-700 text-white shadow-md" : ""
                   }`}
                 >
-                  {plan.cta}
+                  {isAuthenticated
+                    ? plan.popular
+                      ? "Upgrade to Pro"
+                      : "Go to Dashboard"
+                    : plan.cta}
                 </Button>
               </Link>
             </CardFooter>

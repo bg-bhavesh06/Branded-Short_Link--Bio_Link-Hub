@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
 import {
@@ -29,6 +29,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { AnalyticsStatCard } from "@/components/analytics/AnalyticsStatCard";
+import { QrCodeCustomizerDrawer } from "@/components/links/QrCodeCustomizerDrawer";
 import { API_ENDPOINTS, PUBLIC_APP_URL } from "@/lib/api";
 
 const API_BASE = API_ENDPOINTS.links;
@@ -70,12 +71,49 @@ export function LinksPage() {
   // Form states
   const [longUrl, setLongUrl] = useState("");
   const [customAlias, setCustomAlias] = useState("");
-  const [previewUrl, setPreviewUrl] = useState(`${PUBLIC_APP_URL}/r/summer-sale`);
+  const [lastCreatedUrl, setLastCreatedUrl] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [toastMessage, setToastMessage] = useState("");
 
+  // 6-second auto-dismiss for error and toast popups
+  useEffect(() => {
+    if (!error) return;
+    const timer = setTimeout(() => setError(""), 6000);
+    return () => clearTimeout(timer);
+  }, [error]);
+
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timer = setTimeout(() => setToastMessage(""), 6000);
+    return () => clearTimeout(timer);
+  }, [toastMessage]);
+
+  // Real-time Dynamic Preview URL
+  const activePreviewUrl = useMemo(() => {
+    const slug = customAlias.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
+    if (slug) return `${PUBLIC_APP_URL}/r/${slug}`;
+    if (longUrl.trim()) return `${PUBLIC_APP_URL}/r/auto-generated`;
+    return lastCreatedUrl || links[0]?.shortUrl || `${PUBLIC_APP_URL}/r/your-alias`;
+  }, [customAlias, longUrl, lastCreatedUrl, links]);
+
+  // QR Customization Style State (persisted)
+  const DEFAULT_QR_STYLE = { fgColor: "#000000", bgColor: "#FFFFFF", frame: "bottom-pill", frameText: "SCAN ME", frameColor: "#000000", logoType: "none", customCenterText: "LINK" };
+  const [qrStyle, setQrStyle] = useState(() => {
+    try {
+      const saved = localStorage.getItem("linkhub_qr_style");
+      return saved ? JSON.parse(saved) : DEFAULT_QR_STYLE;
+    } catch {
+      return DEFAULT_QR_STYLE;
+    }
+  });
+  const updateQrStyle = (newStyle) => {
+    setQrStyle(newStyle);
+    try { localStorage.setItem("linkhub_qr_style", JSON.stringify(newStyle)); } catch {}
+  };
+
   // Modals state
+  const [customizerLink, setCustomizerLink] = useState(null);
   const [qrModalLink, setQrModalLink] = useState(null);
   const [deleteModalLink, setDeleteModalLink] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -118,10 +156,6 @@ export function LinksPage() {
 
         setLinks(fetchedLinks);
         setPagination(fetchedPagination);
-
-        if (fetchedLinks.length > 0 && !search) {
-          setPreviewUrl(fetchedLinks[0].shortUrl);
-        }
       }
     } catch {
       setError("Failed to load your links. Please check server connection.");
@@ -172,7 +206,7 @@ export function LinksPage() {
 
       setLongUrl("");
       setCustomAlias("");
-      setPreviewUrl(data.link.shortUrl);
+      setLastCreatedUrl(data.link.shortUrl);
       handleCopy(data.link.shortUrl);
       // Refresh page 1 to reflect the new link
       fetchLinks(1, debouncedSearch);
@@ -278,9 +312,19 @@ export function LinksPage() {
             </div>
 
             {error && (
-              <div className="mb-4 flex items-center gap-2 rounded-xl bg-rose-50 border border-rose-200/80 px-3.5 py-2 text-xs text-rose-700 font-medium animate-in fade-in">
-                <AlertCircle className="size-4 shrink-0 text-rose-600" />
-                <span>{error}</span>
+              <div className="mb-4 flex items-center justify-between gap-2 rounded-xl bg-rose-50 border border-rose-200/80 px-3.5 py-2 text-xs text-rose-700 font-medium animate-in fade-in">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="size-4 shrink-0 text-rose-600" />
+                  <span>{error}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setError("")}
+                  className="p-1 rounded-md text-rose-400 hover:text-rose-700 hover:bg-rose-100 transition-colors cursor-pointer"
+                  title="Dismiss"
+                >
+                  <X className="size-3.5" />
+                </button>
               </div>
             )}
 
@@ -347,21 +391,30 @@ export function LinksPage() {
           </div>
 
           {/* Preview Row */}
-          <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs sm:text-sm">
-            <div className="flex items-center gap-2 overflow-hidden">
+          <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between gap-2 text-xs">
+            <div className="flex items-center gap-2 truncate">
               <span className="text-slate-400 font-medium shrink-0">Preview</span>
-              <span className="font-bold text-blue-600 font-mono tracking-tight truncate">
-                {previewUrl}
-              </span>
+              <span className="font-bold text-blue-600 font-mono truncate">{activePreviewUrl}</span>
             </div>
-            <button
-              type="button"
-              onClick={() => handleCopy(previewUrl)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-colors self-start sm:self-auto cursor-pointer"
-            >
-              <Copy className="size-3.5" />
-              <span>Copy</span>
-            </button>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => handleCopy(activePreviewUrl)}
+                className="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-1 cursor-pointer"
+              >
+                <Copy className="size-3.5" />
+                <span>Copy</span>
+              </button>
+              <a
+                href={activePreviewUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="px-2.5 py-1.5 rounded-lg border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium flex items-center gap-1 cursor-pointer"
+              >
+                <ExternalLink className="size-3.5" />
+                <span>Visit</span>
+              </a>
+            </div>
           </div>
         </Card>
 
@@ -374,25 +427,83 @@ export function LinksPage() {
             </p>
           </div>
 
-          {/* Real QR Code Canvas */}
-          <div className="relative my-3 p-3 rounded-2xl border border-slate-200 bg-white shadow-2xs">
-            <QRCodeCanvas
-              id="top-qr-canvas"
-              value={previewUrl}
-              size={100}
-              level="M"
-              includeMargin={false}
-            />
+          {/* Real Styled QR Code Canvas */}
+          <div
+            style={{
+              backgroundColor: qrStyle.bgColor,
+              borderColor: qrStyle.frame === "simple" || qrStyle.frame === "card" ? qrStyle.frameColor : undefined,
+            }}
+            className={`relative my-3 p-3 rounded-2xl flex flex-col items-center justify-center transition-all ${
+              qrStyle.frame === "simple"
+                ? "border-2 shadow-sm"
+                : qrStyle.frame === "card"
+                ? "border-2 shadow-md"
+                : "border border-slate-200 shadow-2xs"
+            }`}
+          >
+            {qrStyle.frame === "top-pill" && (
+              <div
+                className="font-black uppercase tracking-widest text-[9px] mb-1.5"
+                style={{ color: qrStyle.frameColor }}
+              >
+                {qrStyle.frameText || "SCAN ME"}
+              </div>
+            )}
+            <div className="relative rounded-md overflow-hidden flex items-center justify-center">
+              <QRCodeCanvas
+                id="top-qr-canvas"
+                value={activePreviewUrl}
+                size={100}
+                fgColor={qrStyle.fgColor}
+                bgColor={qrStyle.bgColor}
+                level="H"
+                includeMargin={false}
+              />
+              {qrStyle.logoType !== "none" && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div
+                    style={{
+                      backgroundColor: qrStyle.bgColor,
+                      color: qrStyle.fgColor,
+                      borderColor: qrStyle.fgColor,
+                    }}
+                    className="size-6 rounded-full border-2 shadow-xs flex items-center justify-center font-extrabold text-[7.5px]"
+                  >
+                    {qrStyle.logoType === "custom"
+                      ? qrStyle.customCenterText.slice(0, 3).toUpperCase()
+                      : { linkhub: "LH", github: "GH", linkedin: "IN", instagram: "IG", x: "𝕏" }[qrStyle.logoType] || "LH"}
+                  </div>
+                </div>
+              )}
+            </div>
+            {qrStyle.frame === "bottom-pill" && (
+              <div
+                className="font-black uppercase tracking-widest text-[9px] mt-1.5"
+                style={{ color: qrStyle.frameColor }}
+              >
+                {qrStyle.frameText || "SCAN ME"}
+              </div>
+            )}
           </div>
 
-          <Button
-            variant="outline"
-            onClick={() => downloadQRCode("link", "top-qr-canvas")}
-            className="w-full rounded-xl border-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-slate-50 cursor-pointer"
-          >
-            <Download className="size-3.5" />
-            <span>Download PNG</span>
-          </Button>
+          <div className="grid grid-cols-2 gap-2 w-full">
+            <Button
+              variant="outline"
+              onClick={() => setCustomizerLink({ url: activePreviewUrl, title: "Short Link" })}
+              className="rounded-xl border-blue-200 bg-blue-50/50 text-blue-700 text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-blue-100/60 cursor-pointer shadow-2xs"
+            >
+              <Sparkles className="size-3.5 text-blue-600" />
+              <span>Edit QR</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => downloadQRCode("short-link", "top-qr-canvas")}
+              className="rounded-xl border-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-slate-50 cursor-pointer"
+            >
+              <Download className="size-3.5" />
+              <span>Download</span>
+            </Button>
+          </div>
         </Card>
       </div>
 
@@ -736,10 +847,15 @@ export function LinksPage() {
             <div className="grid grid-cols-2 gap-2.5 w-full">
               <Button
                 variant="outline"
-                onClick={() => setQrModalLink(null)}
-                className="rounded-xl border-slate-200 text-xs font-semibold py-2.5 cursor-pointer"
+                onClick={() => {
+                  const target = qrModalLink;
+                  setQrModalLink(null);
+                  setCustomizerLink({ url: target.shortUrl, title: target.originalUrl });
+                }}
+                className="rounded-xl border-blue-200 bg-blue-50/60 text-blue-700 text-xs font-bold py-2.5 flex items-center justify-center gap-1.5 hover:bg-blue-100/70 cursor-pointer"
               >
-                Close
+                <Sparkles className="size-3.5 text-blue-600" />
+                <span>Customize QR</span>
               </Button>
               <Button
                 onClick={() => downloadQRCode(qrModalLink.shortCode, "modal-qr-canvas")}
@@ -828,15 +944,33 @@ export function LinksPage() {
       {/* Floating Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-white p-4 shadow-xl shadow-emerald-500/10 animate-in slide-in-from-bottom-5">
-          <div className="flex size-7 items-center justify-center rounded-full bg-emerald-500 text-white font-bold text-xs">
+          <div className="flex size-7 items-center justify-center rounded-full bg-emerald-500 text-white font-bold text-xs shrink-0">
             <Check className="size-4 stroke-[3]" />
           </div>
-          <div className="text-xs">
+          <div className="text-xs min-w-0 pr-2">
             <div className="font-bold text-slate-900">Success</div>
             <div className="text-slate-500 font-mono truncate max-w-xs">{toastMessage}</div>
           </div>
+          <button
+            type="button"
+            onClick={() => setToastMessage("")}
+            className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer shrink-0 ml-1"
+            title="Dismiss"
+          >
+            <X className="size-3.5" />
+          </button>
         </div>
       )}
+
+      {/* Slide-Over Right Drawer for QR Customization */}
+      <QrCodeCustomizerDrawer
+        isOpen={Boolean(customizerLink)}
+        onClose={() => setCustomizerLink(null)}
+        linkUrl={customizerLink?.url}
+        linkTitle={customizerLink?.title}
+        qrStyle={qrStyle}
+        onUpdateStyle={updateQrStyle}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Link2, CheckCircle2, AlertCircle, Sparkles, MailCheck } from "lucide-react";
+import { Link2, CheckCircle2, AlertCircle, Sparkles, MailCheck, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,13 @@ import { useAuth } from "@/context/AuthContext";
 
 export function SignupPage() {
   const navigate = useNavigate();
-  const { signup, verifyEmail } = useAuth();
+  const { signup, verifyEmail, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/links", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
@@ -17,6 +23,13 @@ export function SignupPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // 6-second auto dismiss for error
+  useEffect(() => {
+    if (!error) return;
+    const timer = setTimeout(() => setError(""), 6000);
+    return () => clearTimeout(timer);
+  }, [error]);
 
   // Simulated Email Verification State
   const [verificationPending, setVerificationPending] = useState(false);
@@ -48,10 +61,7 @@ export function SignupPage() {
     setLoading(false);
 
     if (result.success) {
-      setVerificationPending(true);
-      if (result.simulatedVerificationToken) {
-        setVerificationToken(result.simulatedVerificationToken);
-      }
+      navigate("/links", { replace: true });
     } else {
       setError(result.message || "Failed to create account.");
     }
@@ -99,9 +109,19 @@ export function SignupPage() {
 
         <Card className="rounded-3xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-900/5">
           {error && (
-            <div className="mb-4 flex items-center gap-2 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700 animate-in fade-in duration-150">
-              <AlertCircle className="size-4 shrink-0 text-rose-600" />
-              <span>{error}</span>
+            <div className="mb-4 flex items-center justify-between gap-2 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700 animate-in fade-in duration-150">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="size-4 shrink-0 text-rose-600" />
+                <span>{error}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setError("")}
+                className="p-1 rounded-md text-rose-400 hover:text-rose-700 hover:bg-rose-100 transition-colors cursor-pointer"
+                title="Dismiss"
+              >
+                <X className="size-3.5" />
+              </button>
             </div>
           )}
 
@@ -172,28 +192,23 @@ export function SignupPage() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Bhavesh Ganwani"
+                  placeholder="Alex Morgan"
                   className="rounded-xl"
                 />
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-700">Username</label>
-                <div className="relative flex items-center">
-                  <span className="absolute left-3 text-xs text-slate-400 font-semibold select-none">
-                    @
-                  </span>
-                  <Input
-                    type="text"
-                    required
-                    value={username}
-                    onChange={(e) =>
-                      setUsername(e.target.value.toLowerCase().replace(/\s+/g, ""))
-                    }
-                    placeholder="bhavesh"
-                    className="rounded-xl pl-7"
-                  />
-                </div>
+                <Input
+                  type="text"
+                  required
+                  value={username}
+                  onChange={(e) =>
+                    setUsername(e.target.value.toLowerCase().replace(/\s+/g, ""))
+                  }
+                  placeholder="alexmorgan"
+                  className="rounded-xl"
+                />
               </div>
 
               <div className="space-y-1.5">
@@ -203,7 +218,7 @@ export function SignupPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
+                  placeholder="alex@example.com"
                   className="rounded-xl"
                 />
               </div>
@@ -250,7 +265,25 @@ export function SignupPage() {
 
           <div className="mt-6 pt-4 border-t border-slate-100 text-center">
             <p className="text-xs text-slate-400">
-              By signing up, you agree to our Terms of Service and Privacy Policy.
+              By signing up, you agree to our{" "}
+              <Link
+                to="/terms"
+                target="_blank"
+                rel="noreferrer"
+                className="underline hover:text-slate-600 transition-colors"
+              >
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link
+                to="/privacy"
+                target="_blank"
+                rel="noreferrer"
+                className="underline hover:text-slate-600 transition-colors"
+              >
+                Privacy Policy
+              </Link>
+              .
             </p>
           </div>
         </Card>
