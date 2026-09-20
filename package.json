@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "Branded Short-Link & Bio-Link Hub Monorepo",
+  "type": "module",
   "workspaces": [
     "frontend",
     "server"
@@ -14,6 +15,17 @@
     "build": "npm --prefix frontend run build",
     "preview": "npm --prefix frontend run preview",
     "install:all": "npm install && npm --prefix frontend install && npm --prefix server install"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^8.9.5"
   },
   "devDependencies": {
     "concurrently": "^9.2.4"
