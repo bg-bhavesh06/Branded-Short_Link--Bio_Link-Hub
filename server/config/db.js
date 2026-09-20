@@ -5,10 +5,13 @@ const require = createRequire(import.meta.url);
 const dns = require("dns");
 const mongoose = require("mongoose");
 
-try {
-  dns.setServers(["8.8.8.8", "8.8.4.4"]);
-} catch {
-  // Ignore DNS override errors in serverless environments
+// Only override DNS servers in local development if needed, NEVER in cloud/Vercel
+if (!process.env.VERCEL && process.env.NODE_ENV !== "production") {
+  try {
+    dns.setServers(["8.8.8.8", "8.8.4.4"]);
+  } catch {
+    // Ignore DNS override errors in local dev
+  }
 }
 
 let cachedConnection = null;
@@ -34,7 +37,7 @@ export const connectDB = async () => {
 
   try {
     cachedConnection = await mongoose.connect(uri, {
-      bufferCommands: false,
+      serverSelectionTimeoutMS: 5000,
     });
     console.log(`MongoDB connected successfully: ${cachedConnection.connection.host}`);
     return cachedConnection;
