@@ -1,7 +1,114 @@
 # LinkHub
 
+<div align="right">
+
+[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://branded-linkhub.vercel.app/)
+[![Screen Recording](https://img.shields.io/badge/🎥_Screen_Recording-Google_Drive-34A853?style=for-the-badge&logo=googledrive&logoColor=white)](https://drive.google.com/file/d/1dusKDS4eNDpVt-eeEM9buLeY0kvuhVjb/view?usp=sharing)
+[![GitHub Repo](https://img.shields.io/badge/💻_GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/bg-bhavesh06/Branded-Short_Link--Bio_Link-Hub)
+[![Resume](https://img.shields.io/badge/📄_Author_Resume-Google_Drive-4285F4?style=for-the-badge&logo=googledrive&logoColor=white)](https://drive.google.com/file/d/1-XtzpBTlgYUGDmD2kSXwELL7GeLwkhLo/view?usp=sharing)
+
+</div>
+
 > **Branded Short-Link & Bio-Link Hub**  
 > A high-performance URL shortening engine with custom vanity slugs and real-time click telemetry analytics, paired with a full-featured, mobile-first "Link-in-Bio" creator studio and QR customization suite.
+
+---
+
+### 🔗 Quick Links
+
+| Resource | Link |
+| :--- | :--- |
+| 🚀 **Live Production Application** | [branded-linkhub.vercel.app](https://branded-linkhub.vercel.app/) |
+| 🎬 **Demo & Screen Recording** | [Watch Video on Google Drive](https://drive.google.com/file/d/1dusKDS4eNDpVt-eeEM9buLeY0kvuhVjb/view?usp=sharing) |
+| 📂 **GitHub Source Code** | [bg-bhavesh06/Branded-Short_Link--Bio_Link-Hub](https://github.com/bg-bhavesh06/Branded-Short_Link--Bio_Link-Hub) |
+| 📄 **Developer Resume** | [View Resume on Google Drive](https://drive.google.com/file/d/1-XtzpBTlgYUGDmD2kSXwELL7GeLwkhLo/view?usp=sharing) |
+
+---
+
+## ⚡ Quick Start & Run Commands
+
+Follow these simple steps to get LinkHub running locally on your machine.
+
+### 1. Prerequisites
+- **Node.js**: `v18.0.0` or higher ([Download Node.js](https://nodejs.org/))
+- **MongoDB**: Local MongoDB instance (`mongodb://127.0.0.1:27017`) or a free [MongoDB Atlas](https://www.mongodb.com/atlas) cluster
+- **Git**: Installed on your system
+
+---
+
+### 2. Clone the Repository
+```bash
+git clone https://github.com/bg-bhavesh06/Branded-Short_Link--Bio_Link-Hub.git
+cd Branded-Short_Link--Bio_Link-Hub
+```
+
+---
+
+### 3. Install All Dependencies
+Install dependencies across the root monorepo, server, and frontend in one step:
+```bash
+npm run install:all
+```
+*(Or manually run `npm install` inside the root, `server/`, and `frontend/` folders)*
+
+---
+
+### 4. Configure Environment Variables
+
+Create a `.env` file in the `server` directory:
+```bash
+# On Linux/macOS
+cp server/.env.example server/.env
+
+# On Windows (PowerShell)
+Copy-Item server/.env.example server/.env
+```
+
+Ensure `server/.env` contains the following:
+```env
+PORT=5000
+MONGODB_URI=mongodb://127.0.0.1:27017/linkhub
+CLIENT_URL=http://localhost:5173
+PUBLIC_APP_URL=http://localhost:5173
+JWT_ACCESS_SECRET=your_jwt_access_secret_linkhub_dev_key_2026
+JWT_REFRESH_SECRET=your_jwt_refresh_secret_linkhub_dev_key_2026
+JWT_ACCESS_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
+PASSWORD_RESET_SECRET=your_password_reset_secret_linkhub_dev_key_2026
+IP_HASH_SECRET=your_ip_hash_hmac_secret_linkhub_dev_key_2026
+NODE_ENV=development
+```
+
+---
+
+### 5. Run the Application
+
+#### Option A: One-Command Start (Recommended)
+Run both backend and frontend concurrently from the root directory:
+```bash
+npm run dev
+```
+
+#### Option B: Separate Terminal Sessions
+
+**Terminal 1 (Backend API - Port 5000):**
+```bash
+cd server
+npm run dev
+```
+
+**Terminal 2 (Frontend Client - Port 5173):**
+```bash
+cd frontend
+npm run dev
+```
+
+---
+
+### 6. Access the App
+Open your browser and navigate to:
+- **Frontend Dashboard:** [http://localhost:5173](http://localhost:5173)
+- **Backend API Health:** [http://localhost:5000/api/v1/health](http://localhost:5000/api/v1/health)
 
 ---
 
@@ -198,64 +305,6 @@ LINKHUB/
 | Method | Endpoint | Auth | Response |
 | :--- | :--- | :--- | :--- |
 | `GET` | `/api/v1/health` | None | `{ "success": true, "message": "LinkHub API is running" }` |
-
----
-
-## ⚙️ Environment Variables
-
-Create `server/.env` with the following keys (see `server/.env.example`):
-
-```env
-PORT=5000
-MONGODB_URI=mongodb://127.0.0.1:27017/linkhub
-CLIENT_URL=http://localhost:5173
-PUBLIC_APP_URL=http://localhost:5173
-JWT_ACCESS_SECRET=your_jwt_access_secret_here
-JWT_REFRESH_SECRET=your_jwt_refresh_secret_here
-JWT_ACCESS_EXPIRES_IN=15m
-JWT_REFRESH_EXPIRES_IN=7d
-PASSWORD_RESET_SECRET=your_password_reset_secret_here
-IP_HASH_SECRET=your_ip_hash_hmac_secret_here
-NODE_ENV=development
-```
-
----
-
-## 💻 Local Development Setup
-
-### 1. Prerequisites
-- **Node.js**: v18.0.0 or higher
-- **MongoDB**: v6.0 or higher running locally or MongoDB Atlas connection string
-
-### 2. Installation
-```bash
-# Clone the repository
-git clone https://github.com/bg-bhavesh06/Branded-Short_Link--Bio_Link-Hub.git
-cd Branded-Short_Link--Bio_Link-Hub
-
-# Install dependencies for both frontend and backend
-npm install
-cd server && npm install && cd ..
-cd frontend && npm install && cd ..
-```
-
-### 3. Start Development Servers
-
-Open two terminal sessions:
-
-**Terminal 1 — Backend API (Port 5000):**
-```bash
-cd server
-npm run dev
-```
-
-**Terminal 2 — Frontend App (Port 5173):**
-```bash
-cd frontend
-npm run dev
-```
-
-Visit **`http://localhost:5173`** in your browser.
 
 ---
 
