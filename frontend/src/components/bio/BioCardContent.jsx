@@ -109,7 +109,7 @@ export function BioCardContent({
       <div className="w-full flex items-center justify-between text-xs mb-2 select-none">
         <div className="flex items-center gap-1.5 font-bold">
           <div className="flex size-4 items-center justify-center rounded-md bg-blue-600 text-white"><Link2 className="size-2.5 rotate-45" /></div>
-          <span>LinkHub</span>
+          <span>Branded linkHub</span>
         </div>
         <div className="flex gap-1 opacity-70"><span className="size-1 rounded-full bg-current" /><span className="size-1 rounded-full bg-current" /><span className="size-1 rounded-full bg-current" /></div>
       </div>
@@ -380,7 +380,7 @@ export function BioCardContent({
 
       <div className={`select-none ${isPublic ? "pt-6 pb-2" : "pt-3 pb-1"}`}>
         <a href="/" className={`inline-flex items-center gap-1 font-medium opacity-70 hover:opacity-100 ${th.sub} text-[9px]`}>
-          {templateId === "professional" ? "⚡ LinkHub Business Pro" : templateId === "portfolio" ? "Build Something Amazing ❤️" : "⚡ Powered by LinkHub"}
+          {templateId === "professional" ? "⚡ Branded linkHub Business Pro" : templateId === "portfolio" ? "Build Something Amazing ❤️" : "⚡ Powered by Branded linkHub"}
         </a>
       </div>
     </div>

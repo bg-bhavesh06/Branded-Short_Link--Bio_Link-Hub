@@ -115,7 +115,7 @@ export function PublicBioPage() {
         <Link to="/" className="mt-6">
           <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-2.5 text-xs font-semibold flex items-center gap-2 cursor-pointer shadow-lg shadow-blue-500/20">
             <ArrowLeft className="size-3.5" />
-            <span>Go to LinkHub</span>
+            <span>Go to Branded linkHub</span>
           </Button>
         </Link>
       </div>

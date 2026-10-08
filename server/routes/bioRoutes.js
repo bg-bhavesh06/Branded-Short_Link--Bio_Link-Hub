@@ -1,6 +1,6 @@
-import { Router } from "express";
-import { getMyBio, upsertMyBio, deleteMyBio, getPublicBio } from "../controllers/bioController.js";
-import { requireAuth } from "../middleware/authMiddleware.js";
+const { Router } = require("express");
+const { getMyBio, upsertMyBio, deleteMyBio, getPublicBio } = require("../controllers/bioController");
+const { requireAuth } = require("../middleware/authMiddleware");
 
 const router = Router();
 
@@ -14,4 +14,4 @@ router.post("/delete", requireAuth, deleteMyBio);
 // 2. Public Bio Profile Route
 router.get("/:username", getPublicBio);
 
-export default router;
+module.exports = router;

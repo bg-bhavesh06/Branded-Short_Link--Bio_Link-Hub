@@ -1,4 +1,4 @@
-export const RESERVED_SLUGS = new Set([
+const RESERVED_SLUGS = new Set([
   "api",
   "login",
   "signup",
@@ -17,6 +17,11 @@ export const RESERVED_SLUGS = new Set([
   "about",
 ]);
 
-export const isReservedSlug = (slug) => {
+const isReservedSlug = (slug) => {
   return RESERVED_SLUGS.has(slug.toLowerCase().trim());
+};
+
+module.exports = {
+  RESERVED_SLUGS,
+  isReservedSlug,
 };

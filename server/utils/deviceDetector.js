@@ -3,7 +3,7 @@
  * Detection order: Tablet -> Mobile -> Desktop
  * Returns exactly one of: "Tablet", "Mobile", "Desktop"
  */
-export const detectDevice = (userAgent = "") => {
+const detectDevice = (userAgent = "") => {
   if (!userAgent || typeof userAgent !== "string") {
     return "Desktop";
   }
@@ -23,3 +23,5 @@ export const detectDevice = (userAgent = "") => {
   // 3. Desktop fallback
   return "Desktop";
 };
+
+module.exports = { detectDevice };

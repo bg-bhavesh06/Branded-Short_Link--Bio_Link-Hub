@@ -97,7 +97,7 @@ export function AppearanceSettings() {
           Appearance
         </h2>
         <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-          Customize how LinkHub looks for you.
+          Customize how Branded linkHub looks for you.
         </p>
       </div>
 

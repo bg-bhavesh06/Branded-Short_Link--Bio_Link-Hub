@@ -14,7 +14,7 @@ export function Footer() {
                 <Link2 className="size-4.5 rotate-45" />
               </div>
               <span className="font-extrabold text-xl tracking-tight text-slate-900">
-                Link<span className="text-blue-600">Hub</span>
+                Branded link<span className="text-blue-600">Hub</span>
               </span>
             </Link>
             <p className="text-sm text-slate-500 max-w-sm leading-relaxed">
@@ -102,7 +102,7 @@ export function Footer() {
 
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <p>© 2026 LinkHub. All rights reserved.</p>
+          <p>© 2026 Branded linkHub. All rights reserved.</p>
           <div className="flex items-center gap-6">
             <Link
               to="/privacy"

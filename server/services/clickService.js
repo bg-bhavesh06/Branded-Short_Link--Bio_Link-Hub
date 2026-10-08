@@ -1,12 +1,12 @@
-import Click from "../models/Click.js";
-import { getClientIp, hashIp } from "../utils/ipHash.js";
-import { detectDevice } from "../utils/deviceDetector.js";
+const Click = require("../models/Click");
+const { getClientIp, hashIp } = require("../utils/ipHash");
+const { detectDevice } = require("../utils/deviceDetector");
 
 /**
  * Asynchronously logs a redirect click event to Click collection
  * Telemetry failures do not disrupt or delay the HTTP 302 redirect
  */
-export const recordClick = async (req, shortLinkId) => {
+const recordClick = async (req, shortLinkId) => {
   try {
     const rawIp = getClientIp(req);
     const ipHash = hashIp(rawIp);
@@ -24,4 +24,8 @@ export const recordClick = async (req, shortLinkId) => {
   } catch (error) {
     console.error("Async click telemetry error:", error.message);
   }
+};
+
+module.exports = {
+  recordClick,
 };

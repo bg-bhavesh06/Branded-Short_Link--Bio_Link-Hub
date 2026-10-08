@@ -21,6 +21,7 @@ frontend/dist/
 Video/
 video/
 exampleImages/
+PDF/
 
 # Local env files
 .env

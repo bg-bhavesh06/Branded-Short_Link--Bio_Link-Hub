@@ -21,7 +21,7 @@ export function AboutPage() {
 
       <div className="text-center mb-12">
         <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-          About LinkHub
+          About Branded linkHub
         </h1>
         <p className="mt-3 text-slate-600 text-base max-w-xl mx-auto">
           Built for creators, developers, and internet builders who need high-speed link management and beautiful bio hubs.
@@ -32,7 +32,7 @@ export function AboutPage() {
         <div>
           <h2 className="text-xl font-bold text-slate-900 mb-2">Our Mission</h2>
           <p className="text-slate-600 text-sm leading-relaxed">
-            LinkHub unites the speed of branded URL shortening with the beauty of customizable Link-in-Bio profile hubs. We believe every creator deserves fast redirection, clear click analytics, and effortless sharing tools without complicated setup.
+            Branded linkHub unites the speed of branded URL shortening with the beauty of customizable Link-in-Bio profile hubs. We believe every creator deserves fast redirection, clear click analytics, and effortless sharing tools without complicated setup.
           </p>
         </div>
 

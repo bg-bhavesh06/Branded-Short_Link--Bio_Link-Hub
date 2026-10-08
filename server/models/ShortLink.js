@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const shortLinkSchema = new mongoose.Schema(
   {
@@ -29,4 +29,4 @@ shortLinkSchema.index({ user: 1, createdAt: -1 });
 
 const ShortLink = mongoose.models.ShortLink || mongoose.model("ShortLink", shortLinkSchema);
 
-export default ShortLink;
+module.exports = ShortLink;

@@ -1,4 +1,4 @@
-import BioProfile from "../models/BioProfile.js";
+const BioProfile = require("../models/BioProfile");
 
 const VALID_THEMES = new Set(["Minimal Light", "Dark Slate", "Gradient"]);
 
@@ -26,7 +26,7 @@ const VALID_TEMPLATES = new Set(["creator", "professional", "portfolio", "minima
  * GET /api/v1/bio/me
  * Retrieves the authenticated user's BioProfile
  */
-export const getMyBio = async (req, res, next) => {
+const getMyBio = async (req, res, next) => {
   try {
     const profile = await BioProfile.findOne({ user: req.user.userId });
 
@@ -77,7 +77,7 @@ export const getMyBio = async (req, res, next) => {
  * PUT /api/v1/bio/me
  * Upserts the authenticated user's BioProfile
  */
-export const upsertMyBio = async (req, res, next) => {
+const upsertMyBio = async (req, res, next) => {
   try {
     const {
       username,
@@ -303,7 +303,7 @@ export const upsertMyBio = async (req, res, next) => {
  * GET /api/v1/bio/:username
  * Public Endpoint: Returns public bio profile without exposing sensitive information
  */
-export const getPublicBio = async (req, res, next) => {
+const getPublicBio = async (req, res, next) => {
   try {
     const { username } = req.params;
     if (!username) {
@@ -361,7 +361,7 @@ export const getPublicBio = async (req, res, next) => {
  * DELETE /api/v1/bio/me
  * Deletes the authenticated user's BioProfile
  */
-export const deleteMyBio = async (req, res, next) => {
+const deleteMyBio = async (req, res, next) => {
   try {
     await BioProfile.findOneAndDelete({ user: req.user.userId });
     return res.status(200).json({
@@ -371,5 +371,12 @@ export const deleteMyBio = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+module.exports = {
+  getMyBio,
+  upsertMyBio,
+  deleteMyBio,
+  getPublicBio,
 };
 

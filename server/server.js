@@ -1,11 +1,10 @@
-import path from "path";
-import { fileURLToPath } from "url";
-import dotenv from "dotenv";
-import app from "./app.js";
-import { connectDB } from "./config/db.js";
+const path = require("path");
+const dotenv = require("dotenv");
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, ".env") });
+
+const app = require("./app");
+const { connectDB } = require("./config/db");
 
 const PORT = process.env.PORT || 5000;
 
@@ -16,7 +15,7 @@ const startServer = async () => {
 
     // 2. Start HTTP server
     app.listen(PORT, () => {
-      console.log(`LinkHub server running on http://localhost:${PORT}`);
+      console.log(`Branded linkHub server running on http://localhost:${PORT}`);
     });
   } catch (error) {
     console.error(`Failed to start server: ${error.message}`);
@@ -25,3 +24,4 @@ const startServer = async () => {
 };
 
 startServer();
+

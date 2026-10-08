@@ -1,5 +1,5 @@
-import { Router } from "express";
-import {
+const { Router } = require("express");
+const {
   signup,
   verifyEmail,
   login,
@@ -7,10 +7,11 @@ import {
   logout,
   getMe,
   forgotPassword,
+  verifyOtp,
   resetPassword,
-} from "../controllers/authController.js";
-import { requireAuth } from "../middleware/authMiddleware.js";
-import { authLimiter } from "../middleware/rateLimiters.js";
+} = require("../controllers/authController");
+const { requireAuth } = require("../middleware/authMiddleware");
+const { authLimiter } = require("../middleware/rateLimiters");
 
 const router = Router();
 
@@ -25,9 +26,10 @@ router.post("/login", login);
 router.post("/refresh", refresh);
 router.post("/logout", logout);
 router.post("/forgot-password", forgotPassword);
+router.post("/verify-otp", verifyOtp);
 router.post("/reset-password", resetPassword);
 
 // Protected Authentication Routes
 router.get("/me", requireAuth, getMe);
 
-export default router;
+module.exports = router;

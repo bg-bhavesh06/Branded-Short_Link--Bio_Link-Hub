@@ -25,7 +25,7 @@ export function AccountSettings() {
           Account
         </h2>
         <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-          Manage your LinkHub account.
+          Manage your Branded linkHub account.
         </p>
       </div>
 
@@ -87,7 +87,7 @@ export function AccountSettings() {
               Delete Account
             </div>
             <p className="text-xs text-slate-500 leading-relaxed max-w-md">
-              Permanently delete your LinkHub account and all associated data.
+              Permanently delete your Branded linkHub account and all associated data.
             </p>
           </div>
 

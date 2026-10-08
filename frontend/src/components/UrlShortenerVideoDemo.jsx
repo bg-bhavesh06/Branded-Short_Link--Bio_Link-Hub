@@ -214,7 +214,7 @@ export function UrlShortenerVideoDemo() {
             </div>
             <div className="ml-2 flex items-center gap-1.5 text-xs font-semibold text-slate-700">
               <Video className="size-3.5 text-blue-600" />
-              <span>LinkHub Product Demo</span>
+              <span>Branded linkHub Product Demo</span>
             </div>
           </div>
 

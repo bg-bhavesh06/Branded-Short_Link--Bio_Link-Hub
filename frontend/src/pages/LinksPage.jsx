@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { QRCodeCanvas } from "qrcode.react";
 import {
   Link2,
@@ -53,28 +54,27 @@ const getLinkIcon = (url = "") => {
 
 export function LinksPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   // Data & Pagination states
-  const [links, setLinks] = useState([]);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    totalItems: 0,
-    totalPages: 1,
-    hasNextPage: false,
-    hasPreviousPage: false,
-  });
-  const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
+  const [page, setPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [error, setError] = useState("");
 
   // Form states
   const [longUrl, setLongUrl] = useState("");
   const [customAlias, setCustomAlias] = useState("");
   const [lastCreatedUrl, setLastCreatedUrl] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [toastMessage, setToastMessage] = useState("");
+
+  // Debounce search input (300ms)
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
 
   // 6-second auto-dismiss for error and toast popups
   useEffect(() => {
@@ -88,6 +88,46 @@ export function LinksPage() {
     const timer = setTimeout(() => setToastMessage(""), 6000);
     return () => clearTimeout(timer);
   }, [toastMessage]);
+
+  // Query links data using React Query
+  const {
+    data: queryData,
+    isPending,
+    isFetching,
+    error: queryError,
+  } = useQuery({
+    queryKey: ["links", { page, search: debouncedSearch }],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: "10",
+        search: debouncedSearch.trim(),
+      });
+
+      const res = await fetch(`${API_BASE}?${params.toString()}`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Failed to load your links");
+      }
+      return data.data || data;
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes cache stale time
+    gcTime: 1000 * 60 * 10,   // 10 minutes cache retention
+  });
+
+  const links = queryData?.links || [];
+  const pagination = queryData?.pagination || {
+    page,
+    limit: 10,
+    totalItems: 0,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPreviousPage: false,
+  };
 
   // Real-time Dynamic Preview URL
   const activePreviewUrl = useMemo(() => {
@@ -116,58 +156,6 @@ export function LinksPage() {
   const [customizerLink, setCustomizerLink] = useState(null);
   const [qrModalLink, setQrModalLink] = useState(null);
   const [deleteModalLink, setDeleteModalLink] = useState(null);
-  const [deleting, setDeleting] = useState(false);
-
-  // Debounce search input (300ms)
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-    }, 300);
-    return () => clearTimeout(handler);
-  }, [searchQuery]);
-
-  // Fetch real user links with search & pagination
-  const fetchLinks = useCallback(async (page = 1, search = "") => {
-    try {
-      setLoading(true);
-      setError("");
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: "10",
-        search: search.trim(),
-      });
-
-      const res = await fetch(`${API_BASE}?${params.toString()}`, {
-        method: "GET",
-        credentials: "include",
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        const fetchedLinks = data.data?.links || data.links || [];
-        const fetchedPagination = data.data?.pagination || data.pagination || {
-          page: 1,
-          limit: 10,
-          totalItems: fetchedLinks.length,
-          totalPages: 1,
-          hasNextPage: false,
-          hasPreviousPage: false,
-        };
-
-        setLinks(fetchedLinks);
-        setPagination(fetchedPagination);
-      }
-    } catch {
-      setError("Failed to load your links. Please check server connection.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Re-fetch when debounced search or page changes
-  useEffect(() => {
-    fetchLinks(pagination.page, debouncedSearch);
-  }, [debouncedSearch, pagination.page, fetchLinks]);
 
   const handleCopy = (text) => {
     if (!text) return;
@@ -176,7 +164,38 @@ export function LinksPage() {
     setTimeout(() => setToastMessage(""), 3500);
   };
 
-  const handleShorten = async (e) => {
+  // Create Short Link Mutation
+  const createMutation = useMutation({
+    mutationFn: async ({ originalUrl, customSlug }) => {
+      const res = await fetch(API_BASE, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          originalUrl,
+          customSlug,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Failed to create short link");
+      }
+      return data;
+    },
+    onSuccess: (data) => {
+      setLongUrl("");
+      setCustomAlias("");
+      setLastCreatedUrl(data.link.shortUrl);
+      handleCopy(data.link.shortUrl);
+      queryClient.invalidateQueries({ queryKey: ["links"] });
+    },
+    onError: (err) => {
+      setError(err.message || "Network error while creating link. Please try again.");
+    },
+  });
+
+  const handleShorten = (e) => {
     e.preventDefault();
     setError("");
 
@@ -185,66 +204,45 @@ export function LinksPage() {
       return;
     }
 
-    try {
-      setCreating(true);
-      const res = await fetch(API_BASE, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          originalUrl: longUrl.trim(),
-          customSlug: customAlias.trim() || undefined,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        setError(data.message || "Failed to create short link");
-        return;
-      }
-
-      setLongUrl("");
-      setCustomAlias("");
-      setLastCreatedUrl(data.link.shortUrl);
-      handleCopy(data.link.shortUrl);
-      // Refresh page 1 to reflect the new link
-      fetchLinks(1, debouncedSearch);
-    } catch {
-      setError("Network error while creating link. Please try again.");
-    } finally {
-      setCreating(false);
-    }
+    createMutation.mutate({
+      originalUrl: longUrl.trim(),
+      customSlug: customAlias.trim() || undefined,
+    });
   };
 
-  // Real Delete ShortLink
-  const handleDeleteConfirm = async () => {
-    if (!deleteModalLink) return;
-
-    try {
-      setDeleting(true);
-      const res = await fetch(`${API_BASE}/${deleteModalLink.id}`, {
+  // Delete Short Link Mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => {
+      const res = await fetch(`${API_BASE}/${id}`, {
         method: "DELETE",
         credentials: "include",
       });
 
       const data = await res.json();
-      if (res.ok && data.success) {
-        setDeleteModalLink(null);
-        setToastMessage("Short link deleted successfully");
-        setTimeout(() => setToastMessage(""), 3500);
-
-        // If deleting the last item on a page > 1, navigate to previous page
-        const nextPage = links.length === 1 && pagination.page > 1 ? pagination.page - 1 : pagination.page;
-        fetchLinks(nextPage, debouncedSearch);
-      } else {
-        alert(data.message || "Failed to delete link");
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Failed to delete link");
       }
-    } catch {
-      alert("Network error while deleting link.");
-    } finally {
-      setDeleting(false);
-    }
+      return data;
+    },
+    onSuccess: () => {
+      setDeleteModalLink(null);
+      setToastMessage("Short link deleted successfully");
+      setTimeout(() => setToastMessage(""), 3500);
+
+      // If deleting the last item on a page > 1, navigate to previous page
+      if (links.length === 1 && page > 1) {
+        setPage((prev) => prev - 1);
+      }
+      queryClient.invalidateQueries({ queryKey: ["links"] });
+    },
+    onError: (err) => {
+      alert(err.message || "Network error while deleting link.");
+    },
+  });
+
+  const handleDeleteConfirm = () => {
+    if (!deleteModalLink) return;
+    deleteMutation.mutate(deleteModalLink.id);
   };
 
   // Real QR Code Download helper
@@ -260,7 +258,10 @@ export function LinksPage() {
     document.body.removeChild(downloadLink);
   };
 
-  const totalClicksAcrossLinks = links.reduce((acc, l) => acc + (l.clicks || 0), 0);
+  const totalClicksAcrossLinks = useMemo(
+    () => links.reduce((acc, l) => acc + (l.clicks || 0), 0),
+    [links]
+  );
 
   return (
     <div className="space-y-6 pb-12">
@@ -370,10 +371,10 @@ export function LinksPage() {
                 <div className="sm:col-span-3 flex items-end">
                   <Button
                     type="submit"
-                    disabled={creating}
+                    disabled={createMutation.isPending}
                     className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white rounded-xl py-2 font-semibold text-xs sm:text-sm shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
                   >
-                    {creating ? (
+                    {createMutation.isPending ? (
                       <>
                         <Loader2 className="size-4 animate-spin" />
                         <span>Creating...</span>
@@ -510,6 +511,7 @@ export function LinksPage() {
       {/* 3. Four Statistics Cards Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         <AnalyticsStatCard
+          loading={isPending}
           title="Total Links"
           value={pagination.totalItems.toString()}
           change={`${pagination.totalItems} active shortened links`}
@@ -518,6 +520,7 @@ export function LinksPage() {
           iconBg="bg-blue-50"
         />
         <AnalyticsStatCard
+          loading={isPending}
           title="Total Clicks"
           value={totalClicksAcrossLinks.toLocaleString()}
           change="Real-time telemetry tracked"
@@ -526,6 +529,7 @@ export function LinksPage() {
           iconBg="bg-blue-50"
         />
         <AnalyticsStatCard
+          loading={isPending}
           title="Avg. Clicks / Link"
           value={
             links.length > 0
@@ -538,6 +542,7 @@ export function LinksPage() {
           iconBg="bg-blue-50"
         />
         <AnalyticsStatCard
+          loading={isPending}
           title="Active Links"
           value={pagination.totalItems > 0 ? "100%" : "0%"}
           change="All links routed via HTTP 302"
@@ -557,7 +562,7 @@ export function LinksPage() {
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
-              setPagination((prev) => ({ ...prev, page: 1 }));
+              setPage(1);
             }}
             placeholder="Search links by URL or short code..."
             className="w-full rounded-xl border border-slate-200/90 bg-white pl-9 pr-4 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 shadow-2xs"
@@ -566,17 +571,20 @@ export function LinksPage() {
 
         {/* Dropdowns */}
         <div className="flex items-center gap-2.5 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-2xs shrink-0">
+          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-2xs shrink-0 flex items-center gap-1.5">
             <span>
               Total: {pagination.totalItems} link{pagination.totalItems !== 1 ? "s" : ""}
             </span>
+            {isFetching && !isPending && (
+              <Loader2 className="size-3 animate-spin text-blue-600" title="Refetching..." />
+            )}
           </div>
         </div>
       </div>
 
       {/* 5. Links Table Card */}
       <Card className="rounded-3xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">
-        {loading ? (
+        {isPending ? (
           <div className="py-16 flex flex-col items-center justify-center text-slate-400 gap-3">
             <Loader2 className="size-7 animate-spin text-blue-600" />
             <span className="text-xs font-medium">Loading your short links...</span>
@@ -739,7 +747,7 @@ export function LinksPage() {
         )}
 
         {/* Server-Side Pagination Footer */}
-        {!loading && pagination.totalItems > 0 && (
+        {!isPending && pagination.totalItems > 0 && (
           <div className="px-4 sm:px-6 py-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
             <span>
               Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
@@ -753,9 +761,7 @@ export function LinksPage() {
                 <button
                   type="button"
                   disabled={!pagination.hasPreviousPage}
-                  onClick={() =>
-                    setPagination((prev) => ({ ...prev, page: Math.max(1, prev.page - 1) }))
-                  }
+                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                   className="px-2.5 py-1.5 rounded-lg border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors cursor-pointer"
                 >
                   Previous
@@ -765,9 +771,9 @@ export function LinksPage() {
                   <button
                     key={p}
                     type="button"
-                    onClick={() => setPagination((prev) => ({ ...prev, page: p }))}
+                    onClick={() => setPage(p)}
                     className={`size-8 rounded-lg text-xs font-semibold flex items-center justify-center transition-colors cursor-pointer ${
-                      pagination.page === p
+                      page === p
                         ? "bg-blue-600 text-white shadow-xs"
                         : "border border-slate-200 text-slate-700 hover:bg-slate-50"
                     }`}
@@ -779,12 +785,7 @@ export function LinksPage() {
                 <button
                   type="button"
                   disabled={!pagination.hasNextPage}
-                  onClick={() =>
-                    setPagination((prev) => ({
-                      ...prev,
-                      page: Math.min(prev.totalPages, prev.page + 1),
-                    }))
-                  }
+                  onClick={() => setPage((prev) => Math.min(pagination.totalPages, prev + 1))}
                   className="px-2.5 py-1.5 rounded-lg border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors cursor-pointer"
                 >
                   Next
@@ -876,7 +877,7 @@ export function LinksPage() {
             {/* Close Button */}
             <button
               type="button"
-              disabled={deleting}
+              disabled={deleteMutation.isPending}
               onClick={() => setDeleteModalLink(null)}
               className="absolute right-4 top-4 p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
             >
@@ -913,18 +914,18 @@ export function LinksPage() {
             <div className="flex items-center justify-end gap-2.5">
               <Button
                 variant="outline"
-                disabled={deleting}
+                disabled={deleteMutation.isPending}
                 onClick={() => setDeleteModalLink(null)}
                 className="rounded-xl border-slate-200 text-xs font-semibold py-2.5 cursor-pointer"
               >
                 Cancel
               </Button>
               <Button
-                disabled={deleting}
+                disabled={deleteMutation.isPending}
                 onClick={handleDeleteConfirm}
                 className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold py-2.5 shadow-sm flex items-center gap-1.5 cursor-pointer"
               >
-                {deleting ? (
+                {deleteMutation.isPending ? (
                   <>
                     <Loader2 className="size-3.5 animate-spin" />
                     <span>Deleting...</span>

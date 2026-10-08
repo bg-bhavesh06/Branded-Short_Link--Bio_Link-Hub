@@ -80,7 +80,7 @@ export function AuthProvider({ children }) {
     } catch (error) {
       return {
         success: false,
-        message: "Unable to connect to LinkHub server. Please try again.",
+        message: "Unable to connect to Branded linkHub server. Please try again.",
       };
     }
   };
@@ -164,10 +164,16 @@ export function AuthProvider({ children }) {
 
       const data = await res.json();
 
+      if (!res.ok) {
+        return {
+          success: false,
+          message: data.message || "Failed to process request.",
+        };
+      }
+
       return {
         success: true,
         message: data.message,
-        simulatedResetToken: data.simulatedResetToken,
       };
     } catch (error) {
       return {
@@ -232,6 +238,30 @@ export function AuthProvider({ children }) {
     });
   };
 
+  // Verify 6-digit OTP code against server
+  const verifyOtp = async (email, otp) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return {
+          success: false,
+          message: data.message || "Invalid or expired OTP code.",
+        };
+      }
+      return { success: true, message: data.message };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Unable to verify OTP code. Please try again.",
+      };
+    }
+  };
+
   const value = {
     user,
     loading,
@@ -240,6 +270,7 @@ export function AuthProvider({ children }) {
     signup,
     verifyEmail,
     forgotPassword,
+    verifyOtp,
     resetPassword,
     logout,
     updateUser,

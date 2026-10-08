@@ -126,7 +126,7 @@ function CreatorMockup() {
           ))}
         </div>
       </div>
-      <div className="text-[7.5px] text-center text-slate-400 font-semibold pt-1">⚡ Built with LinkHub</div>
+      <div className="text-[7.5px] text-center text-slate-400 font-semibold pt-1">⚡ Built with Branded linkHub</div>
     </div>
   );
 }
@@ -212,7 +212,7 @@ function ProfessionalMockup() {
           ))}
         </div>
       </div>
-      <div className="text-[7.5px] text-center text-slate-500 font-semibold pt-1">⚡ LinkHub Business Pro</div>
+      <div className="text-[7.5px] text-center text-slate-500 font-semibold pt-1">⚡ Branded linkHub Business Pro</div>
     </div>
   );
 }

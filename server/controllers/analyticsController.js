@@ -1,5 +1,5 @@
-import Click from "../models/Click.js";
-import ShortLink from "../models/ShortLink.js";
+const Click = require("../models/Click");
+const ShortLink = require("../models/ShortLink");
 
 const getRangeParams = (range = "7d") => {
   const normalized = range.toLowerCase();
@@ -21,7 +21,7 @@ const getUserLinksData = async (userId) => {
 /**
  * GET /api/v1/analytics/overview?range=7d
  */
-export const getOverview = async (req, res, next) => {
+const getOverview = async (req, res, next) => {
   try {
     const { range = "7d" } = req.query;
     const { days, startDate } = getRangeParams(range);
@@ -61,7 +61,7 @@ export const getOverview = async (req, res, next) => {
 /**
  * GET /api/v1/analytics/clicks-over-time?range=7d
  */
-export const getClicksOverTime = async (req, res, next) => {
+const getClicksOverTime = async (req, res, next) => {
   try {
     const { range = "7d" } = req.query;
     const { days, startDate } = getRangeParams(range);
@@ -103,7 +103,7 @@ export const getClicksOverTime = async (req, res, next) => {
 /**
  * GET /api/v1/analytics/top-links?range=7d
  */
-export const getTopLinks = async (req, res, next) => {
+const getTopLinks = async (req, res, next) => {
   try {
     const { range = "7d" } = req.query;
     const { startDate } = getRangeParams(range);
@@ -145,7 +145,7 @@ export const getTopLinks = async (req, res, next) => {
 /**
  * GET /api/v1/analytics/top-referrers?range=7d
  */
-export const getTopReferrers = async (req, res, next) => {
+const getTopReferrers = async (req, res, next) => {
   try {
     const { range = "7d" } = req.query;
     const { startDate } = getRangeParams(range);
@@ -191,7 +191,7 @@ export const getTopReferrers = async (req, res, next) => {
 /**
  * GET /api/v1/analytics/devices?range=7d
  */
-export const getDevices = async (req, res, next) => {
+const getDevices = async (req, res, next) => {
   try {
     const { range = "7d" } = req.query;
     const { startDate } = getRangeParams(range);
@@ -235,7 +235,7 @@ export const getDevices = async (req, res, next) => {
 /**
  * GET /api/v1/analytics/recent
  */
-export const getRecentClicks = async (req, res, next) => {
+const getRecentClicks = async (req, res, next) => {
   try {
     const { linkIds } = await getUserLinksData(req.user.userId);
 
@@ -261,4 +261,13 @@ export const getRecentClicks = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+module.exports = {
+  getOverview,
+  getClicksOverTime,
+  getTopLinks,
+  getTopReferrers,
+  getDevices,
+  getRecentClicks,
 };

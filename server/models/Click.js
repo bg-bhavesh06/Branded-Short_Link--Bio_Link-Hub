@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const clickSchema = new mongoose.Schema(
   {
@@ -41,4 +41,4 @@ clickSchema.index({ shortLink: 1, timestamp: -1 });
 
 const Click = mongoose.models.Click || mongoose.model("Click", clickSchema);
 
-export default Click;
+module.exports = Click;

@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const refreshTokenSchema = new mongoose.Schema(
   {
@@ -32,4 +32,4 @@ refreshTokenSchema.index({ user: 1, revokedAt: 1 });
 
 const RefreshToken = mongoose.models.RefreshToken || mongoose.model("RefreshToken", refreshTokenSchema);
 
-export default RefreshToken;
+module.exports = RefreshToken;

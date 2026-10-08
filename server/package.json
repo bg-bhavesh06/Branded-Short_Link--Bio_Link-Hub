@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Backend foundation for LinkHub",
   "main": "server.js",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js"
@@ -17,7 +17,8 @@
     "express-rate-limit": "^8.7.0",
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^8.9.5"
+    "mongoose": "^8.9.5",
+    "nodemailer": "^10.0.16"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"

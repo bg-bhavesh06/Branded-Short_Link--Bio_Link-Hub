@@ -1,13 +1,13 @@
-import { Router } from "express";
-import {
+const { Router } = require("express");
+const {
   getOverview,
   getClicksOverTime,
   getTopLinks,
   getTopReferrers,
   getDevices,
   getRecentClicks,
-} from "../controllers/analyticsController.js";
-import { requireAuth } from "../middleware/authMiddleware.js";
+} = require("../controllers/analyticsController");
+const { requireAuth } = require("../middleware/authMiddleware");
 
 const router = Router();
 
@@ -21,4 +21,4 @@ router.get("/top-referrers", getTopReferrers);
 router.get("/devices", getDevices);
 router.get("/recent", getRecentClicks);
 
-export default router;
+module.exports = router;

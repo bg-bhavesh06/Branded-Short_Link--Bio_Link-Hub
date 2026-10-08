@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const bioProfileSchema = new mongoose.Schema(
   {
@@ -160,4 +160,4 @@ const bioProfileSchema = new mongoose.Schema(
 
 const BioProfile = mongoose.models.BioProfile || mongoose.model("BioProfile", bioProfileSchema);
 
-export default BioProfile;
+module.exports = BioProfile;

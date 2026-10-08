@@ -1,7 +1,18 @@
 import React, { useState } from "react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
 
-export function ClicksChart({ timeRange = "7D", onRangeChange, loading = false, data = null }) {
+export function ClicksChart({
+  timeRange = "7D",
+  onRangeChange,
+  loading = false,
+  data = null,
+}) {
   const [hoveredPoint, setHoveredPoint] = useState(null);
 
   // If real API data is provided, format labels; otherwise fallback to empty/clean array
@@ -10,8 +21,14 @@ export function ClicksChart({ timeRange = "7D", onRangeChange, loading = false, 
       return data.map((item) => {
         const d = new Date(item.date);
         const dayName = d.toLocaleDateString("en-US", { weekday: "short" });
-        const monthDay = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-        const label = data.length <= 7 ? dayName : data.length <= 31 ? `${d.getDate()}` : monthDay;
+        const monthDay = d.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        });
+        const label =
+          data.length <= 7 ? dayName
+          : data.length <= 31 ? `${d.getDate()}`
+          : monthDay;
         return {
           label,
           fullDate: monthDay,
@@ -47,8 +64,12 @@ export function ClicksChart({ timeRange = "7D", onRangeChange, loading = false, 
 
   // Coordinates calculation
   const points = currentData.map((d, index) => {
-    const x = paddingX + (index / Math.max(currentData.length - 1, 1)) * chartWidth;
-    const y = height - paddingY - ((d.value - minVal) / (maxVal - minVal)) * chartHeight;
+    const x =
+      paddingX + (index / Math.max(currentData.length - 1, 1)) * chartWidth;
+    const y =
+      height -
+      paddingY -
+      ((d.value - minVal) / (maxVal - minVal)) * chartHeight;
     return { ...d, x, y };
   });
 
@@ -84,7 +105,9 @@ export function ClicksChart({ timeRange = "7D", onRangeChange, loading = false, 
     <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">
       <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 gap-4">
         <div>
-          <CardTitle className="text-lg font-bold text-slate-900">Clicks Over Time</CardTitle>
+          <CardTitle className="text-lg font-bold text-slate-900">
+            Clicks Over Time
+          </CardTitle>
           <CardDescription className="text-xs sm:text-sm text-slate-500 mt-1">
             Track how your links are performing over time.
           </CardDescription>
@@ -98,11 +121,10 @@ export function ClicksChart({ timeRange = "7D", onRangeChange, loading = false, 
               type="button"
               onClick={() => onRangeChange?.(range)}
               className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                timeRange === range
-                  ? "bg-white text-blue-600 shadow-xs"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
+                timeRange === range ?
+                  "bg-white text-blue-600 shadow-xs"
+                : "text-slate-600 hover:text-slate-900"
+              }`}>
               {range}
             </button>
           ))}
@@ -114,8 +136,7 @@ export function ClicksChart({ timeRange = "7D", onRangeChange, loading = false, 
           {/* Responsive SVG Area Chart */}
           <svg
             viewBox={`0 0 ${width} ${height}`}
-            className="w-full h-auto overflow-visible select-none"
-          >
+            className="w-full h-auto overflow-visible select-none">
             <defs>
               <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#2563eb" stopOpacity="0.28" />
@@ -143,8 +164,7 @@ export function ClicksChart({ timeRange = "7D", onRangeChange, loading = false, 
                     x={paddingX - 8}
                     y={y + 3}
                     textAnchor="end"
-                    className="text-[10px] fill-slate-400 font-mono font-medium"
-                  >
+                    className="text-[10px] fill-slate-400 font-mono font-medium">
                     {val >= 1000 ? `${(val / 1000).toFixed(1)}k` : val}
                   </text>
                 </g>
@@ -178,8 +198,7 @@ export function ClicksChart({ timeRange = "7D", onRangeChange, loading = false, 
                   key={i}
                   className="cursor-pointer"
                   onMouseEnter={() => setHoveredPoint(pt)}
-                  onMouseLeave={() => setHoveredPoint(null)}
-                >
+                  onMouseLeave={() => setHoveredPoint(null)}>
                   <circle cx={pt.x} cy={pt.y} r="14" fill="transparent" />
 
                   {isHovered && (
@@ -210,8 +229,7 @@ export function ClicksChart({ timeRange = "7D", onRangeChange, loading = false, 
                       textAnchor="middle"
                       className={`text-[11px] font-medium transition-colors ${
                         isHovered ? "fill-blue-600 font-bold" : "fill-slate-500"
-                      }`}
-                    >
+                      }`}>
                       {pt.label}
                     </text>
                   )}
@@ -227,9 +245,10 @@ export function ClicksChart({ timeRange = "7D", onRangeChange, loading = false, 
               style={{
                 left: `${(hoveredPoint.x / width) * 100}%`,
                 top: `${(hoveredPoint.y / height) * 100}%`,
-              }}
-            >
-              <div className="font-semibold text-[11px] text-slate-300">{hoveredPoint.fullDate}</div>
+              }}>
+              <div className="font-semibold text-[11px] text-slate-300">
+                {hoveredPoint.fullDate}
+              </div>
               <div className="font-bold text-sm text-white flex items-center gap-1.5">
                 <span className="size-2 rounded-full bg-blue-400" />
                 <span>{hoveredPoint.value.toLocaleString()} clicks</span>

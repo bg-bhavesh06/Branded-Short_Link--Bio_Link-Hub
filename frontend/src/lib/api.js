@@ -6,8 +6,8 @@ const getApiBaseUrl = () => {
     return import.meta.env.VITE_API_URL;
   }
   if (typeof window !== "undefined") {
-    // If running in local Vite dev server on port 5173, point to local Express backend port 5000
-    if (window.location.port === "5173") {
+    // If running in local dev mode (localhost / 127.0.0.1), point to Express backend port 5000
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
       return "http://localhost:5000/api/v1";
     }
     // When deployed on Vercel or same-origin domain, use same origin /api/v1

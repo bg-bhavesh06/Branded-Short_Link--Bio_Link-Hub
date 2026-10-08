@@ -1,6 +1,7 @@
-import bcrypt from "bcryptjs";
-import { User, BioProfile, RefreshToken } from "../models/index.js";
-import {
+const bcrypt = require("bcryptjs");
+const { User, BioProfile, RefreshToken } = require("../models/index");
+const { sendPasswordResetOtpEmail } = require("../utils/emailService");
+const {
   generateAccessToken,
   generateRefreshToken,
   generateRandomToken,
@@ -8,14 +9,14 @@ import {
   verifyRefreshToken,
   setAuthCookies,
   clearAuthCookies,
-} from "../utils/tokens.js";
+} = require("../utils/tokens");
 
 /**
  * @route   POST /api/v1/auth/signup
  * @desc    Register a new user and generate simulated email verification token
  * @access  Public
  */
-export const signup = async (req, res, next) => {
+const signup = async (req, res, next) => {
   try {
     const { name, username, email, password } = req.body;
 
@@ -80,7 +81,7 @@ export const signup = async (req, res, next) => {
       user: user._id,
       username: user.username,
       displayName: user.name,
-      bio: "Welcome to my LinkHub bio page! 🚀",
+      bio: "Welcome to my Branded linkHub bio page! 🚀",
       socialLinks: [],
       bioLinks: [],
       theme: "Minimal Light",
@@ -138,7 +139,7 @@ export const signup = async (req, res, next) => {
  * @desc    Verify email address using verification token (Simulated flow)
  * @access  Public
  */
-export const verifyEmail = async (req, res, next) => {
+const verifyEmail = async (req, res, next) => {
   try {
     const token = req.query.token || req.body.token;
 
@@ -183,7 +184,7 @@ export const verifyEmail = async (req, res, next) => {
  * @desc    Authenticate user, generate JWT access/refresh tokens in httpOnly cookies
  * @access  Public
  */
-export const login = async (req, res, next) => {
+const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
@@ -253,7 +254,7 @@ export const login = async (req, res, next) => {
  * @desc    Refresh expired access token using httpOnly refresh token cookie (with rotation)
  * @access  Public (Cookie-based)
  */
-export const refresh = async (req, res, next) => {
+const refresh = async (req, res, next) => {
   try {
     const rawRefreshToken = req.cookies?.refreshToken;
 
@@ -345,7 +346,7 @@ export const refresh = async (req, res, next) => {
  * @desc    Revoke current refresh session and clear authentication cookies
  * @access  Public
  */
-export const logout = async (req, res, next) => {
+const logout = async (req, res, next) => {
   try {
     const rawRefreshToken = req.cookies?.refreshToken;
 
@@ -373,7 +374,7 @@ export const logout = async (req, res, next) => {
  * @desc    Get currently authenticated user
  * @access  Private
  */
-export const getMe = async (req, res, next) => {
+const getMe = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.userId);
 
@@ -405,102 +406,75 @@ export const getMe = async (req, res, next) => {
  * @desc    Generate simulated password reset token
  * @access  Public
  */
-export const forgotPassword = async (req, res, next) => {
+const forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
+    if (!email?.trim()) return res.status(400).json({ success: false, message: "Email address is required." });
 
-    if (!email?.trim()) {
-      return res.status(400).json({
-        success: false,
-        message: "Email address is required.",
-      });
-    }
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    if (!user) return res.status(404).json({ success: false, message: "Email Not Found!." });
 
-    const normalizedEmail = email.toLowerCase().trim();
-    const user = await User.findOne({ email: normalizedEmail });
+    const realOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.passwordResetTokenHash = hashToken(realOtp);
+    user.passwordResetExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+    await user.save();
 
-    let rawResetToken = null;
+    try { await sendPasswordResetOtpEmail(user.email, realOtp); } catch (err) { console.error("SMTP error:", err.message); }
 
-    if (user) {
-      rawResetToken = generateRandomToken(32);
-      user.passwordResetTokenHash = hashToken(rawResetToken);
-      user.passwordResetExpiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-      await user.save();
-    }
-
-    // Generic response to protect against email enumeration
-    return res.status(200).json({
-      success: true,
-      message: "If an account exists for this email, password reset instructions have been generated.",
-      ...(process.env.NODE_ENV !== "production" && rawResetToken && {
-        simulatedResetToken: rawResetToken,
-      }),
-    });
-  } catch (error) {
-    next(error);
-  }
+    return res.status(200).json({ success: true, message: "A 6-digit OTP verification code has been sent to your Gmail address." });
+  } catch (error) { next(error); }
 };
 
-/**
- * @route   POST /api/v1/auth/reset-password
- * @desc    Reset password using reset token and invalidate active sessions
- * @access  Public
- */
-export const resetPassword = async (req, res, next) => {
+const verifyOtp = async (req, res, next) => {
   try {
-    const { token, password } = req.body;
-
-    if (!token || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "Token and new password are required.",
-      });
-    }
-
-    if (password.length < 8) {
-      return res.status(400).json({
-        success: false,
-        message: "Password must be at least 8 characters long.",
-      });
-    }
-
-    const hashedToken = hashToken(token);
+    const { email, otp } = req.body;
+    if (!email?.trim() || !otp?.trim()) return res.status(400).json({ success: false, message: "Email and 6-digit OTP code are required." });
 
     const user = await User.findOne({
-      passwordResetTokenHash: hashedToken,
+      email: email.toLowerCase().trim(),
+      passwordResetTokenHash: hashToken(otp.toString().trim()),
+      passwordResetExpiresAt: { $gt: new Date() },
+    });
+
+    if (!user) return res.status(400).json({ success: false, message: "Invalid or expired OTP code. Please check your Gmail." });
+    return res.status(200).json({ success: true, message: "OTP code verified successfully." });
+  } catch (error) { next(error); }
+};
+
+const resetPassword = async (req, res, next) => {
+  try {
+    const { token, otp, password } = req.body;
+    const otpToVerify = (otp || token || "").toString().trim();
+    if (!otpToVerify || !password) return res.status(400).json({ success: false, message: "OTP code and new password are required." });
+    if (password.length < 8) return res.status(400).json({ success: false, message: "Password must be at least 8 characters long." });
+
+    const user = await User.findOne({
+      passwordResetTokenHash: hashToken(otpToVerify),
       passwordResetExpiresAt: { $gt: new Date() },
     }).select("+passwordResetTokenHash +passwordResetExpiresAt");
 
-    if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid or expired password reset token.",
-      });
-    }
+    if (!user) return res.status(400).json({ success: false, message: "Invalid or expired OTP code." });
 
-    // 1. Hash new password
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(password, salt);
-
-    // 2. Invalidate reset token
+    user.password = await bcrypt.hash(password, await bcrypt.genSalt(10));
     user.passwordResetTokenHash = undefined;
     user.passwordResetExpiresAt = undefined;
     await user.save();
 
-    // 3. Invalidate all existing refresh sessions for security
-    await RefreshToken.updateMany(
-      { user: user._id, revokedAt: null },
-      { revokedAt: new Date() }
-    );
-
-    // 4. Clear auth cookies
+    await RefreshToken.updateMany({ user: user._id, revokedAt: null }, { revokedAt: new Date() });
     clearAuthCookies(res);
 
-    return res.status(200).json({
-      success: true,
-      message: "Password reset successfully. Please log in with your new password.",
-    });
-  } catch (error) {
-    next(error);
-  }
+    return res.status(200).json({ success: true, message: "Password reset successfully. Please log in with your new password." });
+  } catch (error) { next(error); }
+};
+
+module.exports = {
+  signup,
+  verifyEmail,
+  login,
+  refresh,
+  logout,
+  getMe,
+  forgotPassword,
+  verifyOtp,
+  resetPassword,
 };

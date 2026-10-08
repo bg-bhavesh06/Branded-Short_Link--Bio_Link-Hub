@@ -44,7 +44,7 @@ export function Navbar() {
             <Link2 className="size-5 rotate-45" />
           </div>
           <span className="font-extrabold text-xl tracking-tight text-slate-900">
-            Link<span className="text-blue-600">Hub</span>
+            Branded link<span className="text-blue-600">Hub</span>
           </span>
         </Link>
 

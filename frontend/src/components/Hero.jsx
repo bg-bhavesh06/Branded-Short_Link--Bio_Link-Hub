@@ -39,7 +39,7 @@ export function Hero() {
             <p className="mt-6 text-base sm:text-lg text-slate-600 leading-relaxed max-w-xl font-normal">
               Shorten your long URLs, track real performance, and create a
               beautiful link-in-bio page to share everything that matters — with
-              LinkHub.
+              Branded linkHub.
             </p>
 
             {/* CTA Buttons */}

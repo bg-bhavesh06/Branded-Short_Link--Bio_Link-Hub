@@ -1,16 +1,16 @@
-import express from "express";
-import cors from "cors";
-import helmet from "helmet";
-import cookieParser from "cookie-parser";
-import healthRoutes from "./routes/healthRoutes.js";
-import authRoutes from "./routes/authRoutes.js";
-import linkRoutes from "./routes/linkRoutes.js";
-import analyticsRoutes from "./routes/analyticsRoutes.js";
-import bioRoutes from "./routes/bioRoutes.js";
-import { redirectShortLink } from "./controllers/linkController.js";
-import { redirectLimiter } from "./middleware/rateLimiters.js";
-import { errorHandler } from "./middleware/errorMiddleware.js";
-import { connectDB } from "./config/db.js";
+const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");
+const cookieParser = require("cookie-parser");
+const healthRoutes = require("./routes/healthRoutes");
+const authRoutes = require("./routes/authRoutes");
+const linkRoutes = require("./routes/linkRoutes");
+const analyticsRoutes = require("./routes/analyticsRoutes");
+const bioRoutes = require("./routes/bioRoutes");
+const { redirectShortLink } = require("./controllers/linkController");
+const { redirectLimiter } = require("./middleware/rateLimiters");
+const { errorHandler } = require("./middleware/errorMiddleware");
+const { connectDB } = require("./config/db");
 
 const app = express();
 
@@ -78,4 +78,4 @@ app.use((req, res) => {
 // 5. Centralized Error Handling Middleware
 app.use(errorHandler);
 
-export default app;
+module.exports = app;

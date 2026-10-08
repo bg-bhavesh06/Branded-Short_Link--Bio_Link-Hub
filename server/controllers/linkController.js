@@ -1,8 +1,8 @@
-import ShortLink from "../models/ShortLink.js";
-import Click from "../models/Click.js";
-import { generateShortCode } from "../utils/shortCode.js";
-import { isReservedSlug } from "../utils/reservedSlugs.js";
-import { recordClick } from "../services/clickService.js";
+const ShortLink = require("../models/ShortLink");
+const Click = require("../models/Click");
+const { generateShortCode } = require("../utils/shortCode");
+const { isReservedSlug } = require("../utils/reservedSlugs");
+const { recordClick } = require("../services/clickService");
 
 const isValidUrl = (url) => {
   try {
@@ -21,7 +21,7 @@ const getBaseUrl = () => {
  * Create a new Short Link
  * POST /api/v1/links
  */
-export const createShortLink = async (req, res, next) => {
+const createShortLink = async (req, res, next) => {
   try {
     const { originalUrl, customSlug } = req.body;
 
@@ -117,7 +117,7 @@ export const createShortLink = async (req, res, next) => {
  * Get Authenticated User's Links with Search & Pagination
  * GET /api/v1/links?search=...&page=1&limit=10
  */
-export const getUserLinks = async (req, res, next) => {
+const getUserLinks = async (req, res, next) => {
   try {
     const { search = "", page = "1", limit = "10" } = req.query;
 
@@ -191,7 +191,7 @@ export const getUserLinks = async (req, res, next) => {
  * Delete Short Link and associated Click telemetry
  * DELETE /api/v1/links/:id
  */
-export const deleteShortLink = async (req, res, next) => {
+const deleteShortLink = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -232,7 +232,7 @@ export const deleteShortLink = async (req, res, next) => {
  * Public Redirect Route
  * GET /r/:shortCode
  */
-export const redirectShortLink = async (req, res, next) => {
+const redirectShortLink = async (req, res, next) => {
   try {
     const { shortCode } = req.params;
     const link = await ShortLink.findOne({ shortCode });
@@ -256,4 +256,11 @@ export const redirectShortLink = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+module.exports = {
+  createShortLink,
+  getUserLinks,
+  deleteShortLink,
+  redirectShortLink,
 };

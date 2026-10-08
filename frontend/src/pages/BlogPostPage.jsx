@@ -224,7 +224,7 @@ export function BlogPostPage() {
                     <div className="h-px bg-slate-200 flex-1" />
                     <div className="flex items-center gap-2 rounded-lg bg-slate-100 px-4 py-1.5 text-xs font-bold text-slate-800 border border-slate-200">
                       <Repeat className="size-3.5 text-[#008080]" />
-                      LinkHub Edge Router (301 / 302 Redirect)
+                      Branded linkHub Edge Router (301 / 302 Redirect)
                     </div>
                     <div className="h-px bg-slate-200 flex-1" />
                   </div>
@@ -246,7 +246,7 @@ export function BlogPostPage() {
                   {testSimulating && (
                     <div className="rounded-lg bg-slate-900 p-4 text-xs font-mono text-teal-400 space-y-1">
                       {testStep >= 1 && <div>&gt; Visitor clicks: {post.urlExample.shortUrl}</div>}
-                      {testStep >= 2 && <div>&gt; LinkHub edge logs: Geo (US), Device (Mobile Safari), Referrer (Twitter)</div>}
+                      {testStep >= 2 && <div>&gt; Branded linkHub edge logs: Geo (US), Device (Mobile Safari), Referrer (Twitter)</div>}
                       {testStep >= 3 && <div>&gt; 301 Permanent Redirect to destination completed in 24ms ✓</div>}
                     </div>
                   )}
@@ -350,7 +350,7 @@ export function BlogPostPage() {
           {/* Solid Dark CTA Box */}
           <div className="mt-12 rounded-2xl bg-[#0b2341] p-8 text-white shadow-md">
             <div className="flex items-center gap-2 text-teal-300 text-xs font-semibold uppercase tracking-wider mb-2">
-              <Sparkles className="size-4" /> LinkHub Link Management
+              <Sparkles className="size-4" /> Branded linkHub Link Management
             </div>
             <h3 className="text-2xl font-bold text-white mb-2">
               Start building branded short links with complete masking control

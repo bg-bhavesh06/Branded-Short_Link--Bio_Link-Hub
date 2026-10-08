@@ -27,7 +27,7 @@ export const BLOG_POSTS = [
       "Acts as a clean branded storefront, routing visitors from a concise vanity URL to complex destination queries.",
       "Multiple techniques exist: 301 Permanent Redirects, 302 Temporary Redirects, Meta Refresh, and Reverse Proxy Masking.",
       "Key benefits include up to 39% higher click-through rates, brand protection, seamless affiliate link cleanup, and clean UTM tracking.",
-      "LinkHub handles automatic branded link routing with HTTP status optimization to protect SEO rankings and avoid search engine penalties.",
+      "Branded linkHub handles automatic branded link routing with HTTP status optimization to protect SEO rankings and avoid search engine penalties.",
     ],
     urlExample: {
       longUrl: "https://example.com/blog/2026/03/14/in-depth-guide-to-seo-marketing-strategy/?utm_source=twitter&utm_medium=social&utm_campaign=spring_promo_v2",
@@ -86,7 +86,7 @@ export const BLOG_POSTS = [
         heading: "How Does URL Masking Work Under the Hood?",
         paragraphs: [
           "The technical mechanism behind URL masking is straightforward: a routing server acts as an intelligent intermediary between the visitor and the final destination.",
-          "When a user clicks your short vanity link, the request hits LinkHub's edge network in milliseconds. LinkHub logs analytics (country, device, browser, referrer) and instantly responds with an optimized HTTP redirect header that smoothly sends the user to the destination page.",
+          "When a user clicks your short vanity link, the request hits Branded linkHub's edge network in milliseconds. Branded linkHub logs analytics (country, device, browser, referrer) and instantly responds with an optimized HTTP redirect header that smoothly sends the user to the destination page.",
         ],
       },
       {
@@ -95,7 +95,7 @@ export const BLOG_POSTS = [
           "1. **Social Media & Bio Links**: Platforms like Instagram and X have tight character limits and penalize unbranded long links. A vanity short link looks professional.",
           "2. **Print, Podcasts & Billboards**: Nobody can type a 70-character URL into their mobile phone. A clean link like `linkhub.bio/vip` is easy to remember and type.",
           "3. **Affiliate & Partner Campaigns**: Hide complex tracking tokens while keeping attribution accurate.",
-          "4. **Agile Campaign Updates**: If a product launch page moves or updates, simply change the destination in LinkHub without having to reprint QR codes or update existing posts.",
+          "4. **Agile Campaign Updates**: If a product launch page moves or updates, simply change the destination in Branded linkHub without having to reprint QR codes or update existing posts.",
         ],
       },
     ],
@@ -125,7 +125,7 @@ export const BLOG_POSTS = [
         heading: "Tracking What Matters on Social",
         paragraphs: [
           "Social media monitoring is the continuous process of identifying and analyzing what is being said about your brand, products, and competitors across social networks.",
-          "Combining social listening with real-time LinkHub click telemetry allows you to see not just impressions, but which content drives actual downstream conversions.",
+          "Combining social listening with real-time Branded linkHub click telemetry allows you to see not just impressions, but which content drives actual downstream conversions.",
         ],
       },
       {
@@ -233,7 +233,7 @@ export const BLOG_POSTS = [
     readTime: "5 min read",
     featured: false,
     image: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=1000&auto=format&fit=crop&q=80",
-    summary: "Discover how top creators structure their LinkHub bio pages with video embeds, newsletter signups, and shop links to maximize audience monetization.",
+    summary: "Discover how top creators structure their Branded linkHub bio pages with video embeds, newsletter signups, and shop links to maximize audience monetization.",
     author: {
       name: "Marcus Vance",
       role: "Performance Lead",
@@ -278,7 +278,7 @@ export const BLOG_POSTS = [
         heading: "The Power of Dynamic QR Codes",
         paragraphs: [
           "Static QR codes embed fixed destination URLs into the pixel pattern permanently. If the URL changes or has a typo, the code is useless.",
-          "Dynamic QR codes point to your LinkHub short link, giving you the superpower to update the destination URL at any time while collecting scan analytics.",
+          "Dynamic QR codes point to your Branded linkHub short link, giving you the superpower to update the destination URL at any time while collecting scan analytics.",
         ],
       },
     ],

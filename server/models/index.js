@@ -1,8 +1,13 @@
-import User from "./User.js";
-import ShortLink from "./ShortLink.js";
-import Click from "./Click.js";
-import BioProfile from "./BioProfile.js";
-import RefreshToken from "./RefreshToken.js";
+const User = require("./User");
+const ShortLink = require("./ShortLink");
+const Click = require("./Click");
+const BioProfile = require("./BioProfile");
+const RefreshToken = require("./RefreshToken");
 
-export { User, ShortLink, Click, BioProfile, RefreshToken };
-export default { User, ShortLink, Click, BioProfile, RefreshToken };
+module.exports = {
+  User,
+  ShortLink,
+  Click,
+  BioProfile,
+  RefreshToken,
+};

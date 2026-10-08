@@ -1,10 +1,10 @@
-import { verifyAccessToken } from "../utils/tokens.js";
+const { verifyAccessToken } = require("../utils/tokens");
 
 /**
  * Authentication Middleware
  * Validates httpOnly access token cookie and attaches user ID to req.user
  */
-export const requireAuth = (req, res, next) => {
+const requireAuth = (req, res, next) => {
   const token = req.cookies?.accessToken;
 
   if (!token) {
@@ -34,4 +34,8 @@ export const requireAuth = (req, res, next) => {
       message: "Invalid authentication token. Please log in again.",
     });
   }
+};
+
+module.exports = {
+  requireAuth,
 };

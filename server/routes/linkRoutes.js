@@ -1,11 +1,11 @@
-import { Router } from "express";
-import {
+const { Router } = require("express");
+const {
   createShortLink,
   getUserLinks,
   deleteShortLink,
-} from "../controllers/linkController.js";
-import { requireAuth } from "../middleware/authMiddleware.js";
-import { linkCreationLimiter } from "../middleware/rateLimiters.js";
+} = require("../controllers/linkController");
+const { requireAuth } = require("../middleware/authMiddleware");
+const { linkCreationLimiter } = require("../middleware/rateLimiters");
 
 const router = Router();
 
@@ -14,4 +14,4 @@ router.post("/", linkCreationLimiter, requireAuth, createShortLink);
 router.get("/", requireAuth, getUserLinks);
 router.delete("/:id", requireAuth, deleteShortLink);
 
-export default router;
+module.exports = router;
