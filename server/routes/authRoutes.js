@@ -3,7 +3,6 @@ const {
   signup,
   verifyEmail,
   login,
-  refresh,
   logout,
   getMe,
   forgotPassword,
@@ -11,7 +10,7 @@ const {
   resetPassword,
 } = require("../controllers/authController");
 const { requireAuth } = require("../middleware/authMiddleware");
-const { authLimiter } = require("../middleware/rateLimiters");
+const { authLimiter, passwordResetLimiter } = require("../middleware/rateLimiters");
 
 const router = Router();
 
@@ -23,11 +22,10 @@ router.post("/signup", signup);
 router.get("/verify-email", verifyEmail);
 router.post("/verify-email", verifyEmail);
 router.post("/login", login);
-router.post("/refresh", refresh);
 router.post("/logout", logout);
-router.post("/forgot-password", forgotPassword);
-router.post("/verify-otp", verifyOtp);
-router.post("/reset-password", resetPassword);
+router.post("/forgot-password", passwordResetLimiter, forgotPassword);
+router.post("/verify-otp", passwordResetLimiter, verifyOtp);
+router.post("/reset-password", passwordResetLimiter, resetPassword);
 
 // Protected Authentication Routes
 router.get("/me", requireAuth, getMe);

@@ -1,19 +1,20 @@
+const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
-const { User, BioProfile, RefreshToken } = require("../models/index");
+const { User, BioProfile } = require("../models/index");
 const { sendPasswordResetOtpEmail } = require("../utils/emailService");
 const {
-  generateAccessToken,
-  generateRefreshToken,
+  generateAuthToken,
   generateRandomToken,
   hashToken,
-  verifyRefreshToken,
-  setAuthCookies,
-  clearAuthCookies,
+  setAuthCookie,
+  clearAuthCookie,
 } = require("../utils/tokens");
+
+const MAX_OTP_ATTEMPTS = 5;
 
 /**
  * @route   POST /api/v1/auth/signup
- * @desc    Register a new user and generate simulated email verification token
+ * @desc    Register a new user, provision bio profile, and issue 7-day JWT auth cookie
  * @access  Public
  */
 const signup = async (req, res, next) => {
@@ -56,7 +57,7 @@ const signup = async (req, res, next) => {
       });
     }
 
-    // 4. Hash password
+    // 4. Hash password with bcryptjs (10 rounds)
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -98,23 +99,13 @@ const signup = async (req, res, next) => {
       },
     });
 
-    // 8. Generate JWT Access & Refresh Tokens for automatic login
-    const tokenPayload = { userId: user._id, email: user.email, username: user.username };
-    const accessToken = generateAccessToken(tokenPayload);
-    const refreshToken = generateRefreshToken(tokenPayload);
+    // 8. Generate single 7-day JWT Authentication Token
+    const authToken = generateAuthToken(user);
 
-    // 9. Save refresh token to DB
-    const refreshTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    await RefreshToken.create({
-      user: user._id,
-      tokenHash: hashToken(refreshToken),
-      expiresAt: refreshTokenExpiresAt,
-    });
+    // 9. Set single HTTP-Only cookie (7 days)
+    setAuthCookie(res, authToken);
 
-    // 10. Set HTTP-Only cookies
-    setAuthCookies(res, accessToken, refreshToken);
-
-    // 11. Return safe response with authenticated user
+    // 10. Return safe response with authenticated user
     return res.status(201).json({
       success: true,
       message: "User registered and logged in successfully.",
@@ -181,7 +172,7 @@ const verifyEmail = async (req, res, next) => {
 
 /**
  * @route   POST /api/v1/auth/login
- * @desc    Authenticate user, generate JWT access/refresh tokens in httpOnly cookies
+ * @desc    Authenticate user, generate single 7-day JWT in httpOnly cookie
  * @access  Public
  */
 const login = async (req, res, next) => {
@@ -207,7 +198,7 @@ const login = async (req, res, next) => {
       });
     }
 
-    // 2. Compare password
+    // 2. Compare password with bcryptjs
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({
@@ -216,22 +207,13 @@ const login = async (req, res, next) => {
       });
     }
 
-    // 3. Generate Access (15m) & Refresh (7d) Tokens
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
+    // 3. Generate single 7-day JWT Authentication Token
+    const authToken = generateAuthToken(user);
 
-    // 4. Store hashed refresh token in database for rotation tracking
-    const refreshExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    await RefreshToken.create({
-      user: user._id,
-      tokenHash: hashToken(refreshToken),
-      expiresAt: refreshExpiresAt,
-    });
+    // 4. Set single httpOnly cookie
+    setAuthCookie(res, authToken);
 
-    // 5. Set httpOnly cookies
-    setAuthCookies(res, accessToken, refreshToken);
-
-    // 6. Return safe response without tokens in JSON body
+    // 5. Return safe response without tokens in JSON body
     return res.status(200).json({
       success: true,
       message: "Logged in successfully.",
@@ -250,115 +232,13 @@ const login = async (req, res, next) => {
 };
 
 /**
- * @route   POST /api/v1/auth/refresh
- * @desc    Refresh expired access token using httpOnly refresh token cookie (with rotation)
- * @access  Public (Cookie-based)
- */
-const refresh = async (req, res, next) => {
-  try {
-    const rawRefreshToken = req.cookies?.refreshToken;
-
-    if (!rawRefreshToken) {
-      return res.status(401).json({
-        success: false,
-        message: "Refresh token is required.",
-      });
-    }
-
-    // 1. Verify JWT signature & lifetime
-    let decoded;
-    try {
-      decoded = verifyRefreshToken(rawRefreshToken);
-    } catch {
-      clearAuthCookies(res);
-      return res.status(401).json({
-        success: false,
-        message: "Invalid or expired refresh token. Please log in again.",
-      });
-    }
-
-    // 2. Look up refresh session in database
-    const tokenHash = hashToken(rawRefreshToken);
-    const existingSession = await RefreshToken.findOne({
-      tokenHash,
-      user: decoded.userId,
-      revokedAt: null,
-      expiresAt: { $gt: new Date() },
-    });
-
-    if (!existingSession) {
-      // Possible token reuse attempt: invalidate session and clear cookies
-      clearAuthCookies(res);
-      return res.status(401).json({
-        success: false,
-        message: "Session expired or revoked. Please log in again.",
-      });
-    }
-
-    // 3. Revoke previous refresh token (Rotation)
-    existingSession.revokedAt = new Date();
-    await existingSession.save();
-
-    // 4. Find user
-    const user = await User.findById(decoded.userId);
-    if (!user) {
-      clearAuthCookies(res);
-      return res.status(401).json({
-        success: false,
-        message: "User account no longer exists.",
-      });
-    }
-
-    // 5. Generate NEW access token and NEW refresh token
-    const newAccessToken = generateAccessToken(user);
-    const newRefreshToken = generateRefreshToken(user);
-
-    // 6. Save new refresh token in DB
-    const newExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    await RefreshToken.create({
-      user: user._id,
-      tokenHash: hashToken(newRefreshToken),
-      expiresAt: newExpiresAt,
-    });
-
-    // 7. Update cookies
-    setAuthCookies(res, newAccessToken, newRefreshToken);
-
-    return res.status(200).json({
-      success: true,
-      message: "Session refreshed successfully.",
-      user: {
-        id: user._id,
-        name: user.name,
-        username: user.username,
-        email: user.email,
-        avatar: user.avatar,
-        isEmailVerified: user.isEmailVerified,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
  * @route   POST /api/v1/auth/logout
- * @desc    Revoke current refresh session and clear authentication cookies
+ * @desc    Clear authentication cookie
  * @access  Public
  */
 const logout = async (req, res, next) => {
   try {
-    const rawRefreshToken = req.cookies?.refreshToken;
-
-    if (rawRefreshToken) {
-      const tokenHash = hashToken(rawRefreshToken);
-      await RefreshToken.findOneAndUpdate(
-        { tokenHash, revokedAt: null },
-        { revokedAt: new Date() }
-      );
-    }
-
-    clearAuthCookies(res);
+    clearAuthCookie(res);
 
     return res.status(200).json({
       success: true,
@@ -376,7 +256,15 @@ const logout = async (req, res, next) => {
  */
 const getMe = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.userId);
+    const userId = req.user?.userId;
+    if (!userId || !/^[0-9a-fA-F]{24}$/.test(userId)) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: valid user identity required.",
+      });
+    }
+
+    const user = await User.findById(userId);
 
     if (!user) {
       return res.status(404).json({
@@ -406,23 +294,109 @@ const getMe = async (req, res, next) => {
  * @desc    Generate simulated password reset token
  * @access  Public
  */
+/**
+ * Validate reset OTP with expiry, atomic attempt limiting, timing safety, and replay protection
+ */
+const clearResetChallenge = async (user) => {
+  if (user._id && typeof User.updateOne === "function") {
+    await User.updateOne(
+      { _id: user._id },
+      { $unset: { passwordResetTokenHash: 1, passwordResetExpiresAt: 1, passwordResetAttempts: 1 } }
+    );
+  }
+  user.passwordResetTokenHash = undefined;
+  user.passwordResetExpiresAt = undefined;
+  user.passwordResetAttempts = undefined;
+};
+
+const validateResetChallenge = async (user, otp) => {
+  if (!user || !user.passwordResetTokenHash || !user.passwordResetExpiresAt) {
+    return { valid: false, status: 400, message: "Invalid or expired OTP code." };
+  }
+
+  if (user.passwordResetExpiresAt < new Date()) {
+    await clearResetChallenge(user);
+    return { valid: false, status: 400, message: "OTP code has expired. Please request a new one." };
+  }
+
+  if ((user.passwordResetAttempts || 0) >= MAX_OTP_ATTEMPTS) {
+    await clearResetChallenge(user);
+    return { valid: false, status: 429, message: "Too many failed attempts. This verification code has been invalidated. Please request a new one." };
+  }
+
+  const providedHash = hashToken(otp.toString().trim());
+  const targetHash = user.passwordResetTokenHash;
+  const isMatch =
+    providedHash.length === targetHash.length &&
+    crypto.timingSafeEqual(Buffer.from(providedHash), Buffer.from(targetHash));
+
+  if (!isMatch) {
+    let attempts = (user.passwordResetAttempts || 0) + 1;
+    if (user._id && typeof User.findOneAndUpdate === "function") {
+      const query = User.findOneAndUpdate(
+        {
+          _id: user._id,
+          passwordResetTokenHash: targetHash,
+          passwordResetExpiresAt: { $gt: new Date() },
+          passwordResetAttempts: { $lt: MAX_OTP_ATTEMPTS },
+        },
+        { $inc: { passwordResetAttempts: 1 } },
+        { new: true }
+      );
+      const updated = typeof query?.select === "function"
+        ? await query.select("+passwordResetAttempts")
+        : await query;
+
+      if (updated && updated.passwordResetAttempts !== undefined) {
+        attempts = updated.passwordResetAttempts;
+      } else if (!updated) {
+        await clearResetChallenge(user);
+        return { valid: false, status: 429, message: "Too many failed attempts. This verification code has been invalidated. Please request a new one." };
+      }
+    }
+    user.passwordResetAttempts = attempts;
+    if (attempts >= MAX_OTP_ATTEMPTS) {
+      await clearResetChallenge(user);
+      return { valid: false, status: 429, message: "Too many failed attempts. This verification code has been invalidated. Please request a new one." };
+    }
+    return { valid: false, status: 400, message: "Invalid OTP code. Please check your email." };
+  }
+
+  return { valid: true };
+};
+
 const forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
     if (!email?.trim()) return res.status(400).json({ success: false, message: "Email address is required." });
 
     const user = await User.findOne({ email: email.toLowerCase().trim() });
-    if (!user) return res.status(404).json({ success: false, message: "Email Not Found!." });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Please enter a valid registered email address.",
+      });
+    }
 
-    const realOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    const realOtp = crypto.randomInt(100000, 1000000).toString();
     user.passwordResetTokenHash = hashToken(realOtp);
     user.passwordResetExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+    user.passwordResetAttempts = 0;
     await user.save();
 
-    try { await sendPasswordResetOtpEmail(user.email, realOtp); } catch (err) { console.error("SMTP error:", err.message); }
+    try {
+      await sendPasswordResetOtpEmail(user.email, realOtp);
+    } catch (err) {
+      console.error("SMTP error:", err.message);
+    }
 
-    return res.status(200).json({ success: true, message: "A 6-digit OTP verification code has been sent to your Gmail address." });
-  } catch (error) { next(error); }
+    return res.status(200).json({
+      success: true,
+      message: "A 6-digit OTP verification code has been sent to your Gmail address.",
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 const verifyOtp = async (req, res, next) => {
@@ -430,48 +404,82 @@ const verifyOtp = async (req, res, next) => {
     const { email, otp } = req.body;
     if (!email?.trim() || !otp?.trim()) return res.status(400).json({ success: false, message: "Email and 6-digit OTP code are required." });
 
-    const user = await User.findOne({
-      email: email.toLowerCase().trim(),
-      passwordResetTokenHash: hashToken(otp.toString().trim()),
-      passwordResetExpiresAt: { $gt: new Date() },
-    });
+    const user = await User.findOne({ email: email.toLowerCase().trim() })
+      .select("+passwordResetTokenHash +passwordResetExpiresAt +passwordResetAttempts");
 
-    if (!user) return res.status(400).json({ success: false, message: "Invalid or expired OTP code. Please check your Gmail." });
+    const check = await validateResetChallenge(user, otp);
+    if (!check.valid) return res.status(check.status).json({ success: false, message: check.message });
+
     return res.status(200).json({ success: true, message: "OTP code verified successfully." });
-  } catch (error) { next(error); }
+  } catch (error) {
+    next(error);
+  }
 };
 
 const resetPassword = async (req, res, next) => {
   try {
-    const { token, otp, password } = req.body;
+    const { token, otp, password, email } = req.body;
     const otpToVerify = (otp || token || "").toString().trim();
-    if (!otpToVerify || !password) return res.status(400).json({ success: false, message: "OTP code and new password are required." });
+    if (!otpToVerify || !password) return res.status(400).json({ success: false, message: "Verification code and new password are required." });
     if (password.length < 8) return res.status(400).json({ success: false, message: "Password must be at least 8 characters long." });
 
-    const user = await User.findOne({
-      passwordResetTokenHash: hashToken(otpToVerify),
-      passwordResetExpiresAt: { $gt: new Date() },
-    }).select("+passwordResetTokenHash +passwordResetExpiresAt");
+    const query = email?.trim()
+      ? { email: email.toLowerCase().trim() }
+      : { passwordResetTokenHash: hashToken(otpToVerify) };
 
-    if (!user) return res.status(400).json({ success: false, message: "Invalid or expired OTP code." });
+    const user = await User.findOne(query)
+      .select("+passwordResetTokenHash +passwordResetExpiresAt +passwordResetAttempts");
 
-    user.password = await bcrypt.hash(password, await bcrypt.genSalt(10));
-    user.passwordResetTokenHash = undefined;
-    user.passwordResetExpiresAt = undefined;
-    await user.save();
+    const check = await validateResetChallenge(user, otpToVerify);
+    if (!check.valid) return res.status(check.status).json({ success: false, message: check.message });
 
-    await RefreshToken.updateMany({ user: user._id, revokedAt: null }, { revokedAt: new Date() });
-    clearAuthCookies(res);
+    const hashedPassword = await bcrypt.hash(password, await bcrypt.genSalt(10));
 
-    return res.status(200).json({ success: true, message: "Password reset successfully. Please log in with your new password." });
-  } catch (error) { next(error); }
+    // Atomic Compare-And-Swap (CAS): Consumes token and updates password in a single atomic DB operation
+    let consumedUser = null;
+    if (user._id && typeof User.findOneAndUpdate === "function") {
+      consumedUser = await User.findOneAndUpdate(
+        {
+          _id: user._id,
+          passwordResetTokenHash: user.passwordResetTokenHash,
+          passwordResetExpiresAt: { $gt: new Date() },
+          passwordResetAttempts: { $lt: MAX_OTP_ATTEMPTS },
+        },
+        {
+          $set: { password: hashedPassword },
+          $unset: {
+            passwordResetTokenHash: 1,
+            passwordResetExpiresAt: 1,
+            passwordResetAttempts: 1,
+          },
+        },
+        { new: true }
+      );
+    } else {
+      user.password = hashedPassword;
+      await clearResetChallenge(user);
+      consumedUser = user;
+    }
+
+    if (!consumedUser) {
+      return res.status(400).json({ success: false, message: "Invalid or expired OTP code." });
+    }
+
+    clearAuthCookie(res);
+
+    return res.status(200).json({
+      success: true,
+      message: "Password reset successfully. Please log in with your new password.",
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 module.exports = {
   signup,
   verifyEmail,
   login,
-  refresh,
   logout,
   getMe,
   forgotPassword,

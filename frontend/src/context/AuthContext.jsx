@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { API_ENDPOINTS } from "@/lib/api";
 
 const AuthContext = createContext(null);
@@ -6,14 +7,25 @@ const AuthContext = createContext(null);
 const API_BASE_URL = API_ENDPOINTS.auth;
 
 export function AuthProvider({ children }) {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 1. Session verification & silent refresh on startup
+  const clearLocalUserData = useCallback(() => {
+    try {
+      localStorage.removeItem("linkhub_user_profile");
+      localStorage.removeItem("linkhub_bio_profile");
+      localStorage.removeItem("linkhub_bio_published");
+      localStorage.removeItem("linkhub_bio_current_step");
+    } catch {}
+    queryClient.clear();
+  }, [queryClient]);
+
+  // 1. Session verification on startup
   const checkSession = useCallback(async () => {
     try {
       setLoading(true);
-      // First attempt: fetch currently authenticated user via access token cookie
+      // Fetch currently authenticated user via 7-day authToken cookie
       const meRes = await fetch(`${API_BASE_URL}/me`, {
         method: "GET",
         credentials: "include",
@@ -29,21 +41,7 @@ export function AuthProvider({ children }) {
         return;
       }
 
-      // If access token is expired (401), attempt silent refresh using refresh token cookie
-      if (meRes.status === 401) {
-        const refreshRes = await fetch(`${API_BASE_URL}/refresh`, {
-          method: "POST",
-          credentials: "include",
-        });
-
-        if (refreshRes.ok) {
-          const refreshData = await refreshRes.json();
-          setUser({ ...refreshData.user, ...getSaved() });
-          return;
-        }
-      }
-
-      // If both fail, user is unauthenticated
+      // If token is expired, invalid, or absent (401), user is unauthenticated
       setUser(null);
     } catch {
       setUser(null);
@@ -75,6 +73,7 @@ export function AuthProvider({ children }) {
         };
       }
 
+      clearLocalUserData();
       setUser(data.user);
       return { success: true, user: data.user };
     } catch (error) {
@@ -104,6 +103,7 @@ export function AuthProvider({ children }) {
         };
       }
 
+      clearLocalUserData();
       if (data.user) {
         setUser(data.user);
       }
@@ -202,6 +202,7 @@ export function AuthProvider({ children }) {
       }
 
       // Resetting password invalidates all sessions
+      clearLocalUserData();
       setUser(null);
 
       return { success: true, message: data.message };
@@ -223,7 +224,7 @@ export function AuthProvider({ children }) {
     } catch {
       // ignore network failure on logout
     } finally {
-      localStorage.removeItem("linkhub_user_profile");
+      clearLocalUserData();
       setUser(null);
     }
   };

@@ -32,6 +32,7 @@ import { Card } from "@/components/ui/card";
 import { AnalyticsStatCard } from "@/components/analytics/AnalyticsStatCard";
 import { QrCodeCustomizerDrawer } from "@/components/links/QrCodeCustomizerDrawer";
 import { API_ENDPOINTS, PUBLIC_APP_URL } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 const API_BASE = API_ENDPOINTS.links;
 
@@ -55,6 +56,8 @@ const getLinkIcon = (url = "") => {
 export function LinksPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const userId = user?.id || user?._id || "";
 
   // Data & Pagination states
   const [page, setPage] = useState(1);
@@ -67,6 +70,7 @@ export function LinksPage() {
   const [customAlias, setCustomAlias] = useState("");
   const [lastCreatedUrl, setLastCreatedUrl] = useState("");
   const [toastMessage, setToastMessage] = useState("");
+  const [copiedId, setCopiedId] = useState(null);
 
   // Debounce search input (300ms)
   useEffect(() => {
@@ -96,7 +100,7 @@ export function LinksPage() {
     isFetching,
     error: queryError,
   } = useQuery({
-    queryKey: ["links", { page, search: debouncedSearch }],
+    queryKey: ["links", userId, { page, search: debouncedSearch }],
     queryFn: async () => {
       const params = new URLSearchParams({
         page: page.toString(),
@@ -117,6 +121,7 @@ export function LinksPage() {
     },
     staleTime: 1000 * 60 * 5, // 5 minutes cache stale time
     gcTime: 1000 * 60 * 10,   // 10 minutes cache retention
+    enabled: !!userId,
   });
 
   const links = queryData?.links || [];
@@ -127,6 +132,25 @@ export function LinksPage() {
     totalPages: 1,
     hasNextPage: false,
     hasPreviousPage: false,
+  };
+
+  // Current & Previous links partitioning
+  const currentLink = useMemo(() => {
+    if (links.length === 0) return null;
+    return links[0];
+  }, [links]);
+
+  const previousLinks = useMemo(() => {
+    if (links.length <= 1) return [];
+    return links.slice(1);
+  }, [links]);
+
+  const handleCopyLink = (url, id) => {
+    if (!url) return;
+    navigator.clipboard?.writeText?.(url);
+    setCopiedId(id);
+    setToastMessage(`Link copied! ${url}`);
+    setTimeout(() => setCopiedId(null), 2500);
   };
 
   // Real-time Dynamic Preview URL
@@ -188,7 +212,7 @@ export function LinksPage() {
       setCustomAlias("");
       setLastCreatedUrl(data.link.shortUrl);
       handleCopy(data.link.shortUrl);
-      queryClient.invalidateQueries({ queryKey: ["links"] });
+      queryClient.invalidateQueries({ queryKey: ["links", userId] });
     },
     onError: (err) => {
       setError(err.message || "Network error while creating link. Please try again.");
@@ -233,7 +257,7 @@ export function LinksPage() {
       if (links.length === 1 && page > 1) {
         setPage((prev) => prev - 1);
       }
-      queryClient.invalidateQueries({ queryKey: ["links"] });
+      queryClient.invalidateQueries({ queryKey: ["links", userId] });
     },
     onError: (err) => {
       alert(err.message || "Network error while deleting link.");
@@ -262,6 +286,74 @@ export function LinksPage() {
     () => links.reduce((acc, l) => acc + (l.clicks || 0), 0),
     [links]
   );
+
+  const renderLinkCard = (link, isCurrent) => {
+    const isCopied = copiedId === (link.id || link.shortCode || (isCurrent ? "current" : "prev"));
+    return (
+      <div
+        key={link.id || link._id || link.shortCode}
+        className={`rounded-2xl border p-3.5 sm:p-4 flex items-center justify-between gap-3 transition-all ${
+          isCurrent
+            ? "border-blue-200/90 bg-blue-50/40 hover:bg-blue-50/60"
+            : "border-slate-200/90 bg-white hover:border-slate-300"
+        } shadow-2xs`}
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div
+            className={`size-10 rounded-xl flex items-center justify-center shrink-0 border ${
+              isCurrent
+                ? "bg-blue-100/80 text-blue-600 border-blue-200/60"
+                : "bg-blue-50 text-blue-600 border-blue-100"
+            }`}
+          >
+            <Link2 className="size-5 text-blue-600 rotate-45" />
+          </div>
+          <div className="min-w-0">
+            <a
+              href={link.shortUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="font-bold text-xs sm:text-sm text-blue-600 hover:underline block truncate font-mono"
+            >
+              {link.shortUrl}
+            </a>
+            <p className="text-[11px] sm:text-xs text-slate-500 truncate font-normal mt-0.5">
+              {link.originalUrl}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => handleCopyLink(link.shortUrl, link.id || link.shortCode || (isCurrent ? "current" : "prev"))}
+            className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
+          >
+            {isCopied ? (
+              <>
+                <Check className="size-3.5 text-emerald-600" />
+                <span className="text-emerald-700">Copied</span>
+              </>
+            ) : (
+              <>
+                <Copy className="size-3.5 text-slate-500" />
+                <span>Copy</span>
+              </>
+            )}
+          </button>
+          <a
+            href={link.shortUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="px-3 py-1.5 rounded-xl border border-blue-200/80 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
+          >
+            <ExternalLink className="size-3.5 text-blue-600" />
+            <span>Visit</span>
+          </a>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6 pb-12">
@@ -391,31 +483,100 @@ export function LinksPage() {
             </form>
           </div>
 
-          {/* Preview Row */}
-          <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between gap-2 text-xs">
-            <div className="flex items-center gap-2 truncate">
-              <span className="text-slate-400 font-medium shrink-0">Preview</span>
-              <span className="font-bold text-blue-600 font-mono truncate">{activePreviewUrl}</span>
-            </div>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <button
-                type="button"
-                onClick={() => handleCopy(activePreviewUrl)}
-                className="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-1 cursor-pointer"
-              >
-                <Copy className="size-3.5" />
-                <span>Copy</span>
-              </button>
-              <a
-                href={activePreviewUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="px-2.5 py-1.5 rounded-lg border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium flex items-center gap-1 cursor-pointer"
-              >
-                <ExternalLink className="size-3.5" />
-                <span>Visit</span>
-              </a>
-            </div>
+          {/* Current & Previous Links Display */}
+          <div className="mt-5 pt-4 border-t border-slate-100 space-y-4">
+            {/* Live Typing Preview (only visible when user is typing in inputs) */}
+            {longUrl.trim() && (
+              <div className="flex items-center justify-between gap-2 text-xs bg-slate-50 px-3 py-2 rounded-xl border border-slate-200/80">
+                <div className="flex items-center gap-2 truncate">
+                  <span className="text-slate-400 font-medium shrink-0">Live Preview:</span>
+                  <span className="font-bold text-blue-600 font-mono truncate">{activePreviewUrl}</span>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(activePreviewUrl)}
+                    className="px-2 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-1 cursor-pointer text-xs"
+                  >
+                    <Copy className="size-3" />
+                    <span>Copy</span>
+                  </button>
+                  <a
+                    href={activePreviewUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-2 py-1 rounded-lg border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium flex items-center gap-1 cursor-pointer text-xs"
+                  >
+                    <ExternalLink className="size-3" />
+                    <span>Visit</span>
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {/* CURRENT LINK Section */}
+            {currentLink ? (
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-extrabold tracking-wider text-slate-900 uppercase">
+                    CURRENT LINK
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100/70 text-blue-600 border border-blue-200/60">
+                    Latest created
+                  </span>
+                </div>
+                {renderLinkCard(currentLink, true)}
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-2 truncate">
+                  <span className="text-slate-400 font-medium shrink-0">Preview</span>
+                  <span className="font-bold text-blue-600 font-mono truncate">{activePreviewUrl}</span>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(activePreviewUrl)}
+                    className="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-1 cursor-pointer"
+                  >
+                    <Copy className="size-3.5" />
+                    <span>Copy</span>
+                  </button>
+                  <a
+                    href={activePreviewUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-2.5 py-1.5 rounded-lg border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium flex items-center gap-1 cursor-pointer"
+                  >
+                    <ExternalLink className="size-3.5" />
+                    <span>Visit</span>
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {/* PREVIOUS LINKS Section */}
+            {previousLinks.length > 0 && (
+              <div className="space-y-2 pt-1">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-extrabold tracking-wider text-slate-900 uppercase">
+                      PREVIOUS LINKS
+                    </span>
+                    <span className="px-1.5 py-0.2 rounded-full bg-blue-100 text-blue-600 text-[10px] font-bold flex items-center justify-center min-w-4.5">
+                      {previousLinks.length}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 font-normal hidden sm:block">
+                    Your earlier links stay here while the newest link appears above.
+                  </p>
+                </div>
+
+                <div className="space-y-2 max-h-56 overflow-y-auto pr-0.5">
+                  {previousLinks.map((link) => renderLinkCard(link, false))}
+                </div>
+              </div>
+            )}
           </div>
         </Card>
 

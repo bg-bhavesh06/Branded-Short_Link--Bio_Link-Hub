@@ -45,8 +45,24 @@ const authLimiter = rateLimit({
   },
 });
 
+/**
+ * Strict rate limiter for password reset endpoints
+ * 10 requests per 15 minutes per IP
+ */
+const passwordResetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many password reset requests. Please try again later.",
+  },
+});
+
 module.exports = {
   linkCreationLimiter,
   redirectLimiter,
   authLimiter,
+  passwordResetLimiter,
 };

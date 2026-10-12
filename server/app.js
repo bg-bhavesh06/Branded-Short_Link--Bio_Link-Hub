@@ -17,19 +17,36 @@ const app = express();
 // Security headers (compatible with cross-origin assets/APIs)
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 
-// 1. CORS configuration
-const clientUrl = process.env.CLIENT_URL;
+// 1. CORS configuration: explicit trusted allowlist only
+const getAllowedOrigins = () => {
+  const isProd = process.env.NODE_ENV === "production";
+  const origins = new Set();
+  if (process.env.CLIENT_URL) origins.add(process.env.CLIENT_URL.trim());
+  if (process.env.PUBLIC_APP_URL) origins.add(process.env.PUBLIC_APP_URL.trim());
+  origins.add("https://branded-linkhub.vercel.app");
+
+  if (!isProd) {
+    origins.add("http://localhost:5173");
+    origins.add("http://localhost:5000");
+    origins.add("http://127.0.0.1:5173");
+    origins.add("http://127.0.0.1:5000");
+  }
+  return origins;
+};
+
+const isOriginAllowed = (origin) => {
+  if (!origin) return true; // Server-to-server or non-browser requests
+  const isProd = process.env.NODE_ENV === "production";
+  if (!isProd && (/^https?:\/\/localhost(:\d+)?$/.test(origin) || /^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin))) {
+    return true;
+  }
+  return getAllowedOrigins().has(origin);
+};
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      if (
-        !clientUrl ||
-        origin === clientUrl ||
-        origin.endsWith(".vercel.app") ||
-        origin.includes("localhost") ||
-        origin.includes("127.0.0.1")
-      ) {
+      if (isOriginAllowed(origin)) {
         return callback(null, true);
       }
       return callback(new Error("CORS origin not allowed: " + origin));
@@ -77,5 +94,6 @@ app.use((req, res) => {
 
 // 5. Centralized Error Handling Middleware
 app.use(errorHandler);
+app.isOriginAllowed = isOriginAllowed;
 
 module.exports = app;

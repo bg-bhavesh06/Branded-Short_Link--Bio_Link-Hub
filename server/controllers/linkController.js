@@ -23,6 +23,14 @@ const getBaseUrl = () => {
  */
 const createShortLink = async (req, res, next) => {
   try {
+    const userId = req.user?.userId;
+    if (!userId || !/^[0-9a-fA-F]{24}$/.test(userId)) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: valid user identity required",
+      });
+    }
+
     const { originalUrl, customSlug } = req.body;
 
     if (!originalUrl || !isValidUrl(originalUrl)) {
@@ -84,7 +92,7 @@ const createShortLink = async (req, res, next) => {
     }
 
     const shortLink = await ShortLink.create({
-      user: req.user.userId,
+      user: userId,
       originalUrl: originalUrl.trim(),
       shortCode,
     });
@@ -119,12 +127,20 @@ const createShortLink = async (req, res, next) => {
  */
 const getUserLinks = async (req, res, next) => {
   try {
+    const userId = req.user?.userId;
+    if (!userId || !/^[0-9a-fA-F]{24}$/.test(userId)) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: valid user identity required",
+      });
+    }
+
     const { search = "", page = "1", limit = "10" } = req.query;
 
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
     const limitNum = Math.min(50, Math.max(1, parseInt(limit, 10) || 10));
 
-    const filter = { user: req.user.userId };
+    const filter = { user: userId };
 
     const trimmedSearch = search.trim();
     if (trimmedSearch) {
@@ -193,6 +209,14 @@ const getUserLinks = async (req, res, next) => {
  */
 const deleteShortLink = async (req, res, next) => {
   try {
+    const userId = req.user?.userId;
+    if (!userId || !/^[0-9a-fA-F]{24}$/.test(userId)) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: valid user identity required",
+      });
+    }
+
     const { id } = req.params;
 
     // Check valid ObjectId
@@ -206,7 +230,7 @@ const deleteShortLink = async (req, res, next) => {
     // Secure ownership lookup and deletion
     const deleted = await ShortLink.findOneAndDelete({
       _id: id,
-      user: req.user.userId,
+      user: userId,
     });
 
     if (!deleted) {

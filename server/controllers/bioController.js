@@ -28,7 +28,15 @@ const VALID_TEMPLATES = new Set(["creator", "professional", "portfolio", "minima
  */
 const getMyBio = async (req, res, next) => {
   try {
-    const profile = await BioProfile.findOne({ user: req.user.userId });
+    const userId = req.user?.userId;
+    if (!userId || !/^[0-9a-fA-F]{24}$/.test(userId)) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: valid user identity required",
+      });
+    }
+
+    const profile = await BioProfile.findOne({ user: userId });
 
     if (!profile) {
       return res.status(200).json({
@@ -79,6 +87,14 @@ const getMyBio = async (req, res, next) => {
  */
 const upsertMyBio = async (req, res, next) => {
   try {
+    const userId = req.user?.userId;
+    if (!userId || !/^[0-9a-fA-F]{24}$/.test(userId)) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: valid user identity required",
+      });
+    }
+
     const {
       username,
       avatar = "",
@@ -120,7 +136,7 @@ const upsertMyBio = async (req, res, next) => {
     // Check username uniqueness
     const existing = await BioProfile.findOne({
       username: normalizedUsername,
-      user: { $ne: req.user.userId },
+      user: { $ne: userId },
     });
 
     if (existing) {
@@ -237,7 +253,7 @@ const upsertMyBio = async (req, res, next) => {
 
     // 9. Upsert BioProfile in MongoDB
     const profile = await BioProfile.findOneAndUpdate(
-      { user: req.user.userId },
+      { user: userId },
       {
         username: normalizedUsername,
         avatar: (avatar || "").trim(),
@@ -363,7 +379,15 @@ const getPublicBio = async (req, res, next) => {
  */
 const deleteMyBio = async (req, res, next) => {
   try {
-    await BioProfile.findOneAndDelete({ user: req.user.userId });
+    const userId = req.user?.userId;
+    if (!userId || !/^[0-9a-fA-F]{24}$/.test(userId)) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: valid user identity required",
+      });
+    }
+
+    await BioProfile.findOneAndDelete({ user: userId });
     return res.status(200).json({
       success: true,
       message: "Bio profile deleted successfully",

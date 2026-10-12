@@ -70,10 +70,8 @@ PORT=5000
 MONGODB_URI=mongodb://127.0.0.1:27017/linkhub
 CLIENT_URL=http://localhost:5173
 PUBLIC_APP_URL=http://localhost:5173
-JWT_ACCESS_SECRET=your_jwt_access_secret_linkhub_dev_key_2026
-JWT_REFRESH_SECRET=your_jwt_refresh_secret_linkhub_dev_key_2026
-JWT_ACCESS_EXPIRES_IN=15m
-JWT_REFRESH_EXPIRES_IN=7d
+JWT_SECRET=your_jwt_secret_linkhub_dev_key_2026
+JWT_EXPIRES_IN=7d
 PASSWORD_RESET_SECRET=your_password_reset_secret_linkhub_dev_key_2026
 IP_HASH_SECRET=your_ip_hash_hmac_secret_linkhub_dev_key_2026
 NODE_ENV=development
@@ -119,15 +117,15 @@ Open your browser and navigate to:
 2. **Interactive QR Code Customizer**: Slide-over customization drawer with frame pills, color presets, brand badges, and high-resolution PNG exports.
 3. **Click Telemetry & Analytics Engine**: Non-blocking asynchronous click tracking, referrer capture, device classification (Mobile, Desktop, Tablet), and HMAC-SHA256 IP privacy hashing.
 4. **Link-in-Bio Creator Studio**: 4-step wizard workflow (Templates, Information, Customize, Share & QR), client-side image compression, skill highlights, project showcases, direct contact methods, social media links, and a standalone public route (`/bio/:username`).
-5. **Modern UX & Security**: Seamless pair-token JWT authentication in `httpOnly` cookies, automatic dashboard redirection on login/signup, and 6-second auto-dismissing notifications with manual `(X)` close buttons.
+5. **Modern UX & Security**: Seamless single-token 7-day JWT authentication in `httpOnly` cookies, bcryptjs password hashing, automatic dashboard redirection on login/signup, and 6-second auto-dismissing notifications with manual `(X)` close buttons.
 
 ---
 
 ## ✨ Features
 
 ### 🔐 Authentication & Session Security
-- **Pair-Token Authentication**: 15-minute short-lived JWT Access Tokens and 7-day Refresh Tokens stored in secure `httpOnly`, `SameSite=Lax` cookies.
-- **Refresh Token Rotation**: Single-use refresh tokens hashed with SHA-256 in MongoDB with automated prior session invalidation.
+- **Single-Token 7-Day JWT Authentication**: 7-day authentication JWT stored in secure `httpOnly`, `SameSite=Lax` cookie (`authToken`).
+- **bcryptjs Password Security**: Salted bcrypt hashing during registration and password reset, strictly protecting credentials.
 - **Instant Redirection**: Automatic redirection to the main dashboard (`/links`) upon registration or login.
 - **Password Reset Flow**: Single-use, time-limited hashed reset tokens with automated session clearing.
 - **Protected Client Routes**: Seamless client-side route guarding with silent session re-authentication.
@@ -194,17 +192,17 @@ Express API Gateway (`/api/v1`)                                               Pu
        │    ├─ Auth Limiter (50 req/15m)
        │    └─ Creation Limiter (30 req/15m)
        │
-       ├─ Pair-Token Auth Middleware (`requireAuth`)
-       │    └─ Validates `accessToken` cookie ──► Decodes `req.user.userId`
+       ├─ Single-JWT Auth Middleware (`requireAuth`)
+       │    └─ Validates `authToken` cookie ──► Decodes `req.user.userId`
        │
        ├─ Route Controllers
-       │    ├─ `authController` (Signup, Login, Refresh, Logout, Password Reset)
+       │    ├─ `authController` (Signup, Login, Logout, Password Reset, Me)
        │    ├─ `linkController` (ShortLink CRUD & Pagination)
        │    ├─ `analyticsController` (7d/30d/90d Aggregations, Referrers, Devices)
        │    └─ `bioController` (BioProfile CRUD, Unpublish, Public Presentation)
        │
        ▼
-MongoDB Database (Mongoose Schemas: User, ShortLink, Click, BioProfile, RefreshToken)
+MongoDB Database (Mongoose Schemas: User, ShortLink, Click, BioProfile)
 ```
 
 ---
@@ -238,7 +236,7 @@ LINKHUB/
 │   ├── config/                   # MongoDB connection (`db.js`)
 │   ├── controllers/              # Request handlers (auth, links, analytics, bio)
 │   ├── middleware/               # Auth middleware, rate limiters, error handling
-│   ├── models/                   # Mongoose models (User, ShortLink, Click, BioProfile, RefreshToken)
+│   ├── models/                   # Mongoose models (User, ShortLink, Click, BioProfile)
 │   ├── routes/                   # API route definitions
 │   ├── services/                 # Background telemetry & click logging services
 │   ├── utils/                    # Token generators, Base62 encoding, slug validators
@@ -264,12 +262,11 @@ LINKHUB/
 | Method | Endpoint | Auth | Description |
 | :--- | :--- | :--- | :--- |
 | `POST` | `/api/v1/auth/signup` | None | Registers user, provisions default bio, sets JWT cookies, and returns user object. |
-| `POST` | `/api/v1/auth/login` | None | Authenticates user and issues `accessToken` & `refreshToken` in `httpOnly` cookies. |
-| `POST` | `/api/v1/auth/refresh` | Cookie | Rotates refresh token and issues new token pair. |
-| `POST` | `/api/v1/auth/logout` | Cookie | Revokes refresh token session and clears authentication cookies. |
+| `POST` | `/api/v1/auth/login` | None | Authenticates user and issues 7-day `authToken` in `httpOnly` cookie. |
+| `POST` | `/api/v1/auth/logout` | Cookie | Clears authentication cookie and terminates session. |
 | `GET` | `/api/v1/auth/me` | Cookie | Returns current authenticated user profile. |
 | `POST` | `/api/v1/auth/forgot-password` | None | Generates simulated password reset token. |
-| `POST` | `/api/v1/auth/reset-password` | None | Resets user password and invalidates active refresh sessions. |
+| `POST` | `/api/v1/auth/reset-password` | None | Resets user password and clears authentication cookies. |
 
 ### 2. URL Shortener (`/api/v1/links` & `/r/:shortCode`)
 
@@ -321,7 +318,7 @@ npm run build
 LinkHub is pre-configured with `vercel.json` and `api/index.js` for one-click full-stack deployment on Vercel:
 1. Push your repository to GitHub.
 2. Import the project into [Vercel](https://vercel.com).
-3. Set your production environment variables (`MONGODB_URI`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `CLIENT_URL`, `PUBLIC_APP_URL`, `IP_HASH_SECRET`, `NODE_ENV=production`).
+3. Set your production environment variables (`MONGODB_URI`, `JWT_SECRET`, `CLIENT_URL`, `PUBLIC_APP_URL`, `IP_HASH_SECRET`, `NODE_ENV=production`).
 4. Click **Deploy**. Vercel will host the frontend UI and deploy the backend API as serverless functions.
 
 ---

@@ -11,7 +11,13 @@ const getRangeParams = (range = "7d") => {
 };
 
 const getUserLinksData = async (userId) => {
-  const links = await ShortLink.find({ user: userId }).select("_id shortCode originalUrl");
+  if (!userId || typeof userId !== "string" || !/^[0-9a-fA-F]{24}$/.test(userId.trim())) {
+    return {
+      links: [],
+      linkIds: [],
+    };
+  }
+  const links = await ShortLink.find({ user: userId.trim() }).select("_id shortCode originalUrl");
   return {
     links,
     linkIds: links.map((l) => l._id),
@@ -23,9 +29,17 @@ const getUserLinksData = async (userId) => {
  */
 const getOverview = async (req, res, next) => {
   try {
+    const userId = req.user?.userId;
+    if (!userId || !/^[0-9a-fA-F]{24}$/.test(userId)) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: valid user identity required",
+      });
+    }
+
     const { range = "7d" } = req.query;
     const { days, startDate } = getRangeParams(range);
-    const { linkIds } = await getUserLinksData(req.user.userId);
+    const { linkIds } = await getUserLinksData(userId);
 
     if (linkIds.length === 0) {
       return res.status(200).json({
@@ -63,9 +77,17 @@ const getOverview = async (req, res, next) => {
  */
 const getClicksOverTime = async (req, res, next) => {
   try {
+    const userId = req.user?.userId;
+    if (!userId || !/^[0-9a-fA-F]{24}$/.test(userId)) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: valid user identity required",
+      });
+    }
+
     const { range = "7d" } = req.query;
     const { days, startDate } = getRangeParams(range);
-    const { linkIds } = await getUserLinksData(req.user.userId);
+    const { linkIds } = await getUserLinksData(userId);
 
     const matchStage = { shortLink: { $in: linkIds }, timestamp: { $gte: startDate } };
 
@@ -105,9 +127,17 @@ const getClicksOverTime = async (req, res, next) => {
  */
 const getTopLinks = async (req, res, next) => {
   try {
+    const userId = req.user?.userId;
+    if (!userId || !/^[0-9a-fA-F]{24}$/.test(userId)) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: valid user identity required",
+      });
+    }
+
     const { range = "7d" } = req.query;
     const { startDate } = getRangeParams(range);
-    const { links, linkIds } = await getUserLinksData(req.user.userId);
+    const { links, linkIds } = await getUserLinksData(userId);
 
     if (linkIds.length === 0) {
       return res.status(200).json({ success: true, data: [] });
@@ -147,9 +177,17 @@ const getTopLinks = async (req, res, next) => {
  */
 const getTopReferrers = async (req, res, next) => {
   try {
+    const userId = req.user?.userId;
+    if (!userId || !/^[0-9a-fA-F]{24}$/.test(userId)) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: valid user identity required",
+      });
+    }
+
     const { range = "7d" } = req.query;
     const { startDate } = getRangeParams(range);
-    const { linkIds } = await getUserLinksData(req.user.userId);
+    const { linkIds } = await getUserLinksData(userId);
 
     if (linkIds.length === 0) {
       return res.status(200).json({ success: true, data: [] });
@@ -193,9 +231,17 @@ const getTopReferrers = async (req, res, next) => {
  */
 const getDevices = async (req, res, next) => {
   try {
+    const userId = req.user?.userId;
+    if (!userId || !/^[0-9a-fA-F]{24}$/.test(userId)) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: valid user identity required",
+      });
+    }
+
     const { range = "7d" } = req.query;
     const { startDate } = getRangeParams(range);
-    const { linkIds } = await getUserLinksData(req.user.userId);
+    const { linkIds } = await getUserLinksData(userId);
 
     if (linkIds.length === 0) {
       return res.status(200).json({
@@ -237,7 +283,15 @@ const getDevices = async (req, res, next) => {
  */
 const getRecentClicks = async (req, res, next) => {
   try {
-    const { linkIds } = await getUserLinksData(req.user.userId);
+    const userId = req.user?.userId;
+    if (!userId || !/^[0-9a-fA-F]{24}$/.test(userId)) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: valid user identity required",
+      });
+    }
+
+    const { linkIds } = await getUserLinksData(userId);
 
     if (linkIds.length === 0) {
       return res.status(200).json({ success: true, data: [] });
@@ -264,6 +318,7 @@ const getRecentClicks = async (req, res, next) => {
 };
 
 module.exports = {
+  getUserLinksData,
   getOverview,
   getClicksOverTime,
   getTopLinks,
