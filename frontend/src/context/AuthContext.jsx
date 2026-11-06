@@ -79,7 +79,7 @@ export function AuthProvider({ children }) {
     } catch (error) {
       return {
         success: false,
-        message: "Unable to connect to Branded linkHub server. Please try again.",
+        message: "500 Internal Server Error. Please try again.",
       };
     }
   };

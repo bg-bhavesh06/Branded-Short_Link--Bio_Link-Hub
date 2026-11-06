@@ -40,8 +40,7 @@ export function DashboardLayout() {
         {/* Brand Logo */}
         <Link
           to="/"
-          className="flex items-center gap-2.5 px-2 py-1 font-bold text-xl tracking-tight text-slate-900 group"
-        >
+          className="flex items-center gap-2.5 px-2 py-1 font-bold text-xl tracking-tight text-slate-900 group">
           <div className="flex size-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
             <Link2 className="size-5 rotate-45" />
           </div>
@@ -55,17 +54,13 @@ export function DashboardLayout() {
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive =
-              item.label === "Settings"
-                ? currentPath === "/settings"
-                : item.label === "Analytics"
-                ? currentPath === "/analytics"
-                : item.label === "Links"
-                ? currentPath === "/links"
-                : item.label === "Bio Builder"
-                ? currentPath === "/bio-builder"
-                : item.label === "Overview"
-                ? currentPath === "/overview" || currentPath === "/dashboard"
-                : false;
+              item.label === "Settings" ? currentPath === "/settings"
+              : item.label === "Analytics" ? currentPath === "/analytics"
+              : item.label === "Links" ? currentPath === "/links"
+              : item.label === "Bio Builder" ? currentPath === "/bio-builder"
+              : item.label === "Overview" ?
+                currentPath === "/overview" || currentPath === "/dashboard"
+              : false;
 
             return (
               <button
@@ -76,16 +71,17 @@ export function DashboardLayout() {
                   setMobileOpen(false);
                 }}
                 className={`relative flex w-full items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                  isActive
-                    ? "bg-blue-50/90 text-blue-600 font-semibold"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                }`}
-              >
+                  isActive ?
+                    "bg-blue-50/90 text-blue-600 font-semibold"
+                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                }`}>
                 {/* Active left indicator pill */}
                 {isActive && (
                   <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r-full bg-blue-600" />
                 )}
-                <Icon className={`size-4.5 shrink-0 ${isActive ? "text-blue-600" : "text-slate-500"}`} />
+                <Icon
+                  className={`size-4.5 shrink-0 ${isActive ? "text-blue-600" : "text-slate-500"}`}
+                />
                 <span>{item.label}</span>
               </button>
             );
@@ -101,7 +97,9 @@ export function DashboardLayout() {
             <div className="flex size-7 items-center justify-center rounded-lg bg-blue-600 text-white shadow-xs">
               <Crown className="size-4" />
             </div>
-            <span className="text-sm font-bold text-slate-900">Upgrade to Pro</span>
+            <span className="text-sm font-bold text-slate-900">
+              Upgrade to Pro
+            </span>
           </div>
           <p className="text-xs text-slate-500 leading-relaxed mb-3">
             Get advanced analytics, custom domains and more.
@@ -109,8 +107,7 @@ export function DashboardLayout() {
           <button
             type="button"
             onClick={() => navigate("/pricing")}
-            className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl border border-blue-200 bg-white hover:bg-blue-50 text-blue-600 text-xs font-semibold shadow-2xs transition-colors"
-          >
+            className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl border border-blue-200 bg-white hover:bg-blue-50 text-blue-600 text-xs font-semibold shadow-2xs transition-colors">
             <span>Upgrade Now</span>
             <span className="text-sm">→</span>
           </button>
@@ -119,19 +116,17 @@ export function DashboardLayout() {
         {/* User Profile */}
         <div
           onClick={() => navigate("/settings")}
-          className="flex items-center gap-3 px-2 py-1.5 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors"
-        >
-          {user?.avatar ? (
+          className="flex items-center gap-3 px-2 py-1.5 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors">
+          {user?.avatar ?
             <img
               src={user.avatar}
               alt="Avatar"
               className="size-9 rounded-full object-cover border border-slate-200"
             />
-          ) : (
-            <div className="flex size-9 items-center justify-center rounded-full bg-indigo-100 text-indigo-700 font-bold text-sm shrink-0 border border-indigo-200">
+          : <div className="flex size-9 items-center justify-center rounded-full bg-indigo-100 text-indigo-700 font-bold text-sm shrink-0 border border-indigo-200">
               {(user?.name || "B").charAt(0).toUpperCase()}
             </div>
-          )}
+          }
           <div className="flex flex-col min-w-0 flex-1">
             <span className="text-xs font-semibold text-slate-900 truncate">
               {user?.name || "User Account"}
@@ -149,8 +144,7 @@ export function DashboardLayout() {
             await logout();
             navigate("/login");
           }}
-          className="flex w-full items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:text-rose-600 transition-colors rounded-lg hover:bg-rose-50/50"
-        >
+          className="flex w-full items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:text-rose-600 transition-colors rounded-lg hover:bg-rose-50/50">
           <LogOut className="size-4" />
           <span>Logout</span>
         </button>
@@ -177,8 +171,7 @@ export function DashboardLayout() {
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
-                className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100"
-              >
+                className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100">
                 <X className="size-5" />
               </button>
             </div>
@@ -196,8 +189,7 @@ export function DashboardLayout() {
             type="button"
             onClick={() => setMobileOpen(true)}
             className="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 border border-slate-200 shrink-0"
-            aria-label="Open sidebar"
-          >
+            aria-label="Open sidebar">
             <Menu className="size-5" />
           </button>
 
